@@ -16,7 +16,7 @@ sera ajouté avec le bloc corrélation/validation des semaines 5-6).
 from __future__ import annotations
 
 import enum
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     DateTime,
@@ -29,7 +29,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Base(DeclarativeBase):
@@ -80,7 +80,7 @@ class Scan(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    findings: Mapped[list["Finding"]] = relationship(back_populates="scan")
+    findings: Mapped[list[Finding]] = relationship(back_populates="scan")
 
     def __repr__(self) -> str:  # pragma: no cover - confort de débogage
         return f"<Scan id={self.id} type={self.scan_type} source={self.source} target={self.target}>"
@@ -107,7 +107,7 @@ class Rule(Base):
     version: Mapped[str] = mapped_column(String(32), nullable=False)
     file_path: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    findings: Mapped[list["Finding"]] = relationship(back_populates="rule")
+    findings: Mapped[list[Finding]] = relationship(back_populates="rule")
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Rule id={self.id} name={self.name!r}>"
@@ -144,9 +144,9 @@ class Finding(Base):
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
     )
 
-    scan: Mapped["Scan"] = relationship(back_populates="findings")
-    rule: Mapped["Rule | None"] = relationship(back_populates="findings")
-    evidences: Mapped[list["Evidence"]] = relationship(
+    scan: Mapped[Scan] = relationship(back_populates="findings")
+    rule: Mapped[Rule | None] = relationship(back_populates="findings")
+    evidences: Mapped[list[Evidence]] = relationship(
         back_populates="finding", cascade="all, delete-orphan"
     )
 
@@ -174,7 +174,7 @@ class Evidence(Base):
     content_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    finding: Mapped["Finding"] = relationship(back_populates="evidences")
+    finding: Mapped[Finding] = relationship(back_populates="evidences")
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Evidence id={self.id} type={self.evidence_type} finding_id={self.finding_id}>"
