@@ -1,0 +1,40 @@
+# Environnements virtuels
+.venv/
+venv/
+env/
+
+# Cache et bytecode Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Build / packaging
+build/
+dist/
+*.spec
+
+# Base de données locale (jamais versionnée)
+*.db
+*.sqlite
+*.sqlite3
+
+# Preuves de scan (contenu potentiellement sensible - jamais versionné, cf. ES-08/ES-09)
+data/evidence/
+
+# Cache local de la base de connaissances (régénérable, pas versionné)
+data/knowledge_cache/
+
+# Configuration locale / secrets
+.env
+*.local.yaml
+
+# Éditeurs / IDE
+.vscode/
+.idea/
+*.swp
+
+# Système
+.DS_Store
+Thumbs.db
