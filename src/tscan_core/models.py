@@ -129,6 +129,16 @@ class Finding(Base):
     category: Mapped[str] = mapped_column(String(64), nullable=False)
     severity: Mapped[str] = mapped_column(String(32), nullable=False)
 
+    external_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    """Identifiant propre à l'outil source (ex: template-id Nuclei, pluginid
+    ZAP). Conservé dès l'import car nécessaire à la corrélation multi-sources
+    du bloc suivant (RF-09) : sans cet identifiant, il serait impossible de
+    relier deux résultats désignant la même règle de détection d'origine."""
+
+    matched_at: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    """URL ou endpoint précis où le résultat a été observé, lorsque l'outil
+    source le fournit. Utile au reporting (RF-27) comme aux preuves (ES-08)."""
+
     status: Mapped[FindingStatus] = mapped_column(
         Enum(FindingStatus), default=FindingStatus.UNVALIDATED, nullable=False
     )

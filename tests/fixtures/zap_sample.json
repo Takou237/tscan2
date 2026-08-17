@@ -1,0 +1,62 @@
+{
+  "@version": "2.14.0",
+  "@generated": "Fri, 14 Aug 2026 10:05:00",
+  "site": [
+    {
+      "@name": "http://example.test",
+      "@host": "example.test",
+      "@port": "80",
+      "@ssl": "false",
+      "alerts": [
+        {
+          "pluginid": "40012",
+          "alertRef": "40012",
+          "alert": "Cross Site Scripting (Reflected)",
+          "name": "Cross Site Scripting (Reflected)",
+          "riskcode": "3",
+          "confidence": "2",
+          "riskdesc": "High (Medium)",
+          "desc": "<p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance.</p>",
+          "instances": [
+            {
+              "uri": "http://example.test/search.jsp?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E",
+              "method": "GET",
+              "param": "q",
+              "evidence": "<script>alert(1)</script>"
+            }
+          ],
+          "count": "1",
+          "solution": "<p>Validate all input and sanitize output.</p>",
+          "reference": "https://owasp.org/www-community/attacks/xss/",
+          "cweid": "79",
+          "wascid": "8",
+          "sourceid": "3"
+        },
+        {
+          "pluginid": "10202",
+          "alertRef": "10202",
+          "alert": "Absence of Anti-CSRF Tokens",
+          "name": "Absence of Anti-CSRF Tokens",
+          "riskcode": "2",
+          "confidence": "2",
+          "riskdesc": "Medium (Medium)",
+          "desc": "<p>No Anti-CSRF tokens were found in a HTML submission form.</p>",
+          "instances": [
+            {
+              "uri": "http://example.test/account/update",
+              "method": "POST",
+              "param": "",
+              "evidence": "<form method=\"POST\" action=\"/account/update\">"
+            }
+          ],
+          "count": "1",
+          "solution": "<p>Use anti-CSRF tokens.</p>",
+          "reference": "https://owasp.org/www-community/attacks/csrf",
+          "cweid": "352",
+          "wascid": "9",
+          "sourceid": "3"
+        }
+      ]
+    }
+  ]
+}

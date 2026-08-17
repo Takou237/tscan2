@@ -9,14 +9,18 @@ de réduire les faux positifs par corrélation et validation active non destruct
 
 ## Statut du projet
 
-🚧 **En cours de développement — semaine 3 du planning (mise en place du projet).**
+🚧 **En cours de développement — semaine 4 du planning (bloc import & modèle pivot).**
 
 Le cahier des charges complet (contexte, objectifs, étude de l'existant, besoins,
 architecture, technologies, planning) se trouve dans `docs/cahier_des_charges.pdf`.
 
-À ce stade, seul le squelette du projet est en place : structure des modules, modèles
-de données, base de tests, première fenêtre de l'application desktop. Aucune
-fonctionnalité d'import, de corrélation ou de scan n'est encore implémentée.
+Fonctionnalités disponibles à ce stade :
+- Import de résultats Nuclei (JSONL) et OWASP ZAP (JSON) vers le modèle pivot `Finding`
+- Conservation du résultat brut d'origine, rattachement à un `Scan`
+- Commande CLI `tscan import <fichier> --format nuclei|zap --target <cible>`
+
+Pas encore implémenté : corrélation, scoring, moteur de règles, scan actif,
+reporting, interface desktop (blocs des semaines suivantes).
 
 ## Structure du dépôt
 
