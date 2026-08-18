@@ -1,0 +1,41 @@
+id: RULE-CSRF-001
+name: "Absence de protection CSRF sur un formulaire sensible"
+category: csrf
+severity: medium
+version: "1.0.0"
+created_at: "2026-08-14"
+updated_at: "2026-08-14"
+
+description: >
+  Un formulaire déclenchant une action sensible (modification de compte,
+  transaction...) ne comporte pas de jeton anti-CSRF, ce qui peut permettre
+  à un site tiers malveillant de déclencher cette action à l'insu de
+  l'utilisateur authentifié.
+
+detection:
+  keywords:
+    - csrf
+    - cross-site request forgery
+    - cross-site-request-forgery
+
+validation:
+  method: passive
+  description: >
+    Validation passive : l'absence de jeton anti-CSRF dans le formulaire
+    est vérifiable par analyse du code HTML de la page, sans action
+    active sur la cible.
+
+evidence_expected:
+  - "Extrait du formulaire HTML ne comportant pas de jeton anti-CSRF"
+
+recommendation: >
+  Ajouter un jeton anti-CSRF unique par session (ou par requête) à tout
+  formulaire déclenchant une action sensible, et le vérifier côté serveur
+  avant d'exécuter l'action.
+
+references:
+  - "https://owasp.org/www-community/attacks/csrf"
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.25

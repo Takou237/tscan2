@@ -1,0 +1,46 @@
+id: RULE-VULNCOMP-001
+name: "Composant logiciel avec vulnérabilité connue"
+category: vulnerable_component
+severity: medium
+version: "1.0.0"
+created_at: "2026-08-14"
+updated_at: "2026-08-14"
+
+description: >
+  Une version de bibliothèque ou de composant logiciel détectée sur la
+  cible correspond à une version affectée par une ou plusieurs
+  vulnérabilités publiées (CVE). Le risque réel dépend de l'usage concret
+  du composant vulnérable dans l'application, que ce rattachement seul ne
+  permet pas de déterminer.
+
+detection:
+  keywords:
+    - outdated
+    - vulnerable-version
+    - known-vulnerability
+    - cve-
+
+validation:
+  method: passive
+  description: >
+    Validation passive : la correspondance entre la version détectée et la
+    base de connaissances CVE locale (chapitre 10) suffit à documenter le
+    résultat. Une confirmation active de l'exploitabilité réelle n'est pas
+    prévue au périmètre du MVP (chapitre 15, limites explicites).
+
+evidence_expected:
+  - "Numéro de version du composant observé sur la cible"
+  - "Identifiant CVE correspondant dans la base de connaissances locale"
+
+recommendation: >
+  Mettre à jour le composant vers une version corrigée. Si la mise à jour
+  n'est pas immédiatement possible, évaluer les mesures de contournement
+  documentées par l'éditeur ou par la CVE concernée.
+
+references:
+  - "https://nvd.nist.gov/"
+  - "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+
+confidence:
+  base_score: 0.55
+  multi_source_bonus: 0.25

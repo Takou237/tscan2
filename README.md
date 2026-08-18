@@ -9,18 +9,20 @@ de réduire les faux positifs par corrélation et validation active non destruct
 
 ## Statut du projet
 
-🚧 **En cours de développement — semaine 4 du planning (bloc import & modèle pivot).**
+🚧 **En cours de développement — semaines 5-6 du planning (corrélation, validation, scoring).**
 
 Le cahier des charges complet (contexte, objectifs, étude de l'existant, besoins,
 architecture, technologies, planning) se trouve dans `docs/cahier_des_charges.pdf`.
 
 Fonctionnalités disponibles à ce stade :
 - Import de résultats Nuclei (JSONL) et OWASP ZAP (JSON) vers le modèle pivot `Finding`
-- Conservation du résultat brut d'origine, rattachement à un `Scan`
-- Commande CLI `tscan import <fichier> --format nuclei|zap --target <cible>`
+- Système de règles YAML versionnées (`rules/`), une par famille du MVP
+- Pré-filtrage contextuel, corrélation multi-sources, scoring de confiance explicable
+- Statuts automatiques (Probable / Potentiel faux positif) et correction manuelle avec historique
+- **Scénario A démontrable en CLI** : `tscan import` (x2 sources) → `tscan correlate` → `tscan list` / `tscan show` → `tscan correct`
 
-Pas encore implémenté : corrélation, scoring, moteur de règles, scan actif,
-reporting, interface desktop (blocs des semaines suivantes).
+Pas encore implémenté : reconnaissance et scan actif, validation active non
+destructive, reporting, interface desktop (blocs des semaines suivantes).
 
 ## Structure du dépôt
 

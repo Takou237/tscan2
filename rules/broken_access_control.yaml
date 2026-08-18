@@ -1,0 +1,45 @@
+id: RULE-BAC-001
+name: "Ressource sensible exposée sans contrôle d'accès"
+category: broken_access_control
+severity: high
+version: "1.0.0"
+created_at: "2026-08-14"
+updated_at: "2026-08-14"
+
+description: >
+  Une ressource sensible (panneau d'administration, listing de répertoire,
+  endpoint interne) est accessible sans authentification ni autorisation,
+  alors qu'elle devrait être protégée.
+
+detection:
+  keywords:
+    - access-control
+    - exposed-panel
+    - directory-listing
+    - admin panel
+    - exposure
+
+validation:
+  method: passive
+  description: >
+    Validation passive : l'accessibilité de la ressource sans
+    authentification est directement observable dans la réponse HTTP
+    (code de statut 200 sur une ressource attendue protégée). Une
+    confirmation active plus poussée (tentative d'action sur la ressource)
+    est explicitement exclue du MVP pour rester dans le périmètre des tests
+    non destructifs (ES-03, ES-04).
+
+evidence_expected:
+  - "Réponse HTTP confirmant l'accessibilité de la ressource sans authentification"
+
+recommendation: >
+  Restreindre l'accès à la ressource par une authentification et une
+  autorisation appropriées, et vérifier qu'aucune information sensible
+  n'a été exposée depuis sa mise en ligne.
+
+references:
+  - "https://owasp.org/Top10/A01_2021-Broken_Access_Control/"
+
+confidence:
+  base_score: 0.65
+  multi_source_bonus: 0.25

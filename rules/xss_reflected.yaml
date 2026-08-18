@@ -1,0 +1,44 @@
+id: RULE-XSS-001
+name: "Cross-Site Scripting réfléchi"
+category: xss
+severity: high
+version: "1.0.0"
+created_at: "2026-08-14"
+updated_at: "2026-08-14"
+
+description: >
+  Une entrée utilisateur est réfléchie dans la réponse HTTP sans
+  neutralisation suffisante, permettant potentiellement l'exécution de
+  code JavaScript arbitraire dans le navigateur d'une victime.
+
+detection:
+  keywords:
+    - xss
+    - cross-site-scripting
+    - cross site scripting
+
+validation:
+  method: active_non_destructive
+  description: >
+    Le moteur de scan actif de Tscan (semaines 7-8) confirmera ce type de
+    résultat par l'envoi d'un marqueur inoffensif et la vérification de sa
+    réflexion non neutralisée dans la réponse. Cette méthode n'est pas
+    encore implémentée : pour un résultat importé, seule la validation
+    passive (cohérence du résultat rapporté par l'outil source) est
+    appliquée pour le moment.
+
+evidence_expected:
+  - "Requête ayant déclenché la réflexion"
+  - "Extrait de la réponse montrant la charge utile non neutralisée"
+
+recommendation: >
+  Neutraliser (encoder) toute donnée utilisateur avant de l'insérer dans une
+  réponse HTML, et mettre en place une politique Content-Security-Policy
+  restrictive en défense en profondeur.
+
+references:
+  - "https://owasp.org/www-community/attacks/xss/"
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.3

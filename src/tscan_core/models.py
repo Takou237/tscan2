@@ -5,12 +5,10 @@ charges : tout résultat, qu'il provienne d'un import externe (Nuclei, ZAP) ou
 du moteur de scan actif de Tscan, est représenté sous la forme d'un `Finding`
 unique, indépendant de son format d'origine.
 
-Statut du squelette (semaine 3) : structure des tables uniquement, aucune
-logique métier. Les tables sont volontairement minimales et seront complétées
-au fil des blocs fonctionnels suivants (semaines 4 à 8), conformément au
-planning du chapitre 13, sans anticiper de fonctionnalités qui n'y sont pas
-encore prévues (par exemple, l'historique détaillé des corrections de statut
-sera ajouté avec le bloc corrélation/validation des semaines 5-6).
+Statut : structure de base posée en semaine 3, complétée en semaines 4
+(champs external_id/matched_at pour l'import) et 5-6 (score_explanation et
+StatusHistory pour la corrélation, le scoring et la correction manuelle),
+conformément au planning du chapitre 13.
 """
 
 from __future__ import annotations
@@ -149,6 +147,13 @@ class Finding(Base):
     raw_result: Mapped[str | None] = mapped_column(Text, nullable=True)
     """Résultat brut d'origine, conservé sans modification (RF-05 / ES-07)."""
 
+    score_explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    """Explication du score de confiance (RF-10), sérialisée en JSON : liste
+    ordonnée des facteurs ayant contribué au score final (règle appliquée,
+    corrélation multi-sources, pénalités de pré-filtrage). Conservée en
+    texte plutôt que recalculée à l'affichage, pour que l'explication reste
+    fidèle même si les règles évoluent ultérieurement."""
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
@@ -158,6 +163,9 @@ class Finding(Base):
     rule: Mapped[Rule | None] = relationship(back_populates="findings")
     evidences: Mapped[list[Evidence]] = relationship(
         back_populates="finding", cascade="all, delete-orphan"
+    )
+    status_history: Mapped[list[StatusHistory]] = relationship(
+        back_populates="finding", cascade="all, delete-orphan", order_by="StatusHistory.changed_at"
     )
 
     def __repr__(self) -> str:  # pragma: no cover
@@ -188,3 +196,35 @@ class Evidence(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Evidence id={self.id} type={self.evidence_type} finding_id={self.finding_id}>"
+
+
+class StatusHistory(Base):
+    """Trace d'un changement de statut d'un `Finding` (RF-12 / ES-06).
+
+    Une entrée est créée à chaque changement de statut, qu'il soit produit
+    automatiquement par le moteur de scoring ou par une correction manuelle
+    d'un analyste. `changed_by` vaut `"tscan_engine"` pour un changement
+    automatique, ou un identifiant d'utilisateur pour une correction
+    manuelle -- cette distinction permet de répondre, en cas de besoin, à la
+    question « ce statut a-t-il jamais été revu par un humain ? ».
+    """
+
+    __tablename__ = "status_history"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), nullable=False)
+
+    old_status: Mapped[FindingStatus | None] = mapped_column(Enum(FindingStatus), nullable=True)
+    new_status: Mapped[FindingStatus] = mapped_column(Enum(FindingStatus), nullable=False)
+    changed_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    finding: Mapped[Finding] = relationship(back_populates="status_history")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<StatusHistory finding_id={self.finding_id} "
+            f"{self.old_status} -> {self.new_status} by {self.changed_by!r}>"
+        )
+

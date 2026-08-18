@@ -1,0 +1,51 @@
+id: RULE-MISCONFIG-001
+name: "En-tête de sécurité HTTP manquant"
+category: security_misconfiguration
+severity: info
+version: "1.0.0"
+created_at: "2026-08-14"
+updated_at: "2026-08-14"
+
+description: >
+  Un en-tête de sécurité HTTP recommandé (Content-Security-Policy,
+  X-Frame-Options, Strict-Transport-Security...) est absent de la réponse du
+  serveur. Ce n'est pas une vulnérabilité exploitable en soi, mais une
+  faiblesse de configuration qui facilite d'autres attaques (Clickjacking,
+  injection de contenu...).
+
+detection:
+  keywords:
+    - misconfig
+    - clickjacking
+    - x-frame-options
+    - security-headers
+    - csp
+    - content-security-policy
+    - ssl
+    - tls
+
+validation:
+  method: passive
+  description: >
+    Validation passive suffisante pour le MVP : l'absence d'un en-tête est
+    directement vérifiable dans la réponse HTTP, sans nécessiter de
+    confirmation active. Ce statut de validation "passive" concerne
+    uniquement la vérification elle-même ; la reconnaissance active (envoi
+    de la requête HTTP par le moteur Tscan) reste prévue au bloc scan actif
+    (semaines 7-8) et n'est pas encore implémentée à ce stade.
+
+evidence_expected:
+  - "En-tête HTTP absent observé dans la réponse du serveur"
+
+recommendation: >
+  Ajouter l'en-tête HTTP manquant sur le serveur ou le reverse proxy
+  concerné, avec une valeur adaptée au contexte de l'application (par
+  exemple une politique Content-Security-Policy restrictive plutôt que
+  permissive).
+
+references:
+  - "https://owasp.org/www-project-secure-headers/"
+
+confidence:
+  base_score: 0.6
+  multi_source_bonus: 0.25
