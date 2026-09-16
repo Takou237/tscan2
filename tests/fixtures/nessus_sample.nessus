@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+  <Report name="scan-lab">
+    <ReportHost name="example.test">
+      <HostProperties>
+        <tag name="operating-system">Linux</tag>
+      </HostProperties>
+      <ReportItem port="80" svc_name="http" protocol="tcp" severity="2" pluginID="10150" pluginName="HTTP Server Type and Version">
+        <description>Le serveur HTTP expose son type et sa version dans l'en-tete Server.</description>
+        <plugin_output>Apache/2.4.53</plugin_output>
+        <cve>CVE-2021-44790</cve>
+        <cve>CVE-2022-22719</cve>
+      </ReportItem>
+      <ReportItem port="443" svc_name="https" protocol="tcp" severity="0" pluginID="20000" pluginName="HTTP Cookiejar">
+        <description>Le serveur n'impose aucune politique de cookies.</description>
+        <plugin_output>No Set-Cookie header observed</plugin_output>
+      </ReportItem>
+      <ReportItem port="443" svc_name="https" protocol="tcp" severity="3" pluginID="104743" pluginName="SSL/TLS Version">
+        <description>La cible accepte un protocole TLS desuet.</description>
+        <plugin_output>Protocol TLSv1.2 accepted</plugin_output>
+      </ReportItem>
+      <ReportItem port="80" svc_name="http" protocol="tcp" severity="2" pluginID="51192" pluginName="SSL Certificate Expiry">
+        <description>Le certificat SSL/TLS est expire ou va expirer prochainement.</description>
+      </ReportItem>
+    </ReportHost>
+    <ReportHost name="api.example.test">
+      <ReportItem port="443" svc_name="https" protocol="tcp" severity="1" pluginID="10335" pluginName="Web Application Potential SQL Injection">
+        <description>Une entree utilisateur est concatene dans une requete SQL.</description>
+        <plugin_output>Parameter 'id' echoed in error message.</plugin_output>
+      </ReportItem>
+    </ReportHost>
+  </Report>
+</NessusClientData_v2>

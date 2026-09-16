@@ -1,0 +1,47 @@
+id: RULE-WEAK-HASH-001
+name: "Hachage faible / legacy de mot de passe exposé"
+category: information_disclosure
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Un hachage de mot de passe utilisant un algorithme faible (MD5, SHA1,
+  crypt legacy, MySQL 4.1+) est présent dans une réponse publique. Un
+  attaquant pourrait casser ce hachage hors-ligne pour récupérer le mot de
+  passe en clair.
+
+detection:
+  keywords:
+    - weak hash
+    - md5
+    - sha1
+    - password hash
+
+validation:
+  method: active
+  description: >
+    Analyse passive des pages déjà crawlées + sondes GET bénignes sur des
+    fichiers de configuration exposés (ex. .htpasswd). Aucune vérification de
+    dictionnaire n'est effectuée : le module signale la présence d'un motif
+    de hachage faible dans un contexte de mot de passe, sans confirmer sa
+    casse (RF-12).
+
+evidence_expected:
+  - "Motif de hachage MD5/SHA1/crypt dans une réponse publique, proche d'un mot-clé de mot de passe"
+
+recommendation: >
+  Migrer vers des algorithmes de hachage de mot de passe modernes et salés
+  (argon2, bcrypt, PBKDF2) et ne jamais exposer les fichiers de
+  configuration contenant des secrets.
+
+references:
+  - "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/04-Authentication_Testing/04-Testing_for_Weak_Password_Policy"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+
+checks: []
+
+confidence:
+  base_score: 0.7
+  multi_source_bonus: 0.15

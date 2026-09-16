@@ -1,0 +1,47 @@
+id: RULE-TLS-WEAK-001
+name: "Configuration TLS faible"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-08-19"
+updated_at: "2026-08-19"
+
+description: >
+  La configuration TLS de la cible présente un affaiblissement observé lors
+  de la sonde de reconnaissance : certificat auto-signé, certificat expiré
+  ou pas encore valide, ou protocole TLS 1.0/1.1 déprécié. La confiance du
+  visiteur et l'intégrité des échanges en sont affaiblies.
+
+detection:
+  keywords:
+    - tls
+    - ssl
+    - certificate
+    - self-signed
+    - expired
+
+validation:
+  method: passive
+  description: >
+    Constat passif fondé sur la sonde TLS de la phase de reconnaissance
+    (certificat lu sans validation de chaîne, aucune donnée transmise,
+    ES-09) : auto-signé, périodes de validité et version du protocole sont
+    jugées par rapport à l'instant du scan.
+
+evidence_expected:
+  - "Informations du certificat observées (émetteur, validité, version TLS)"
+
+recommendation: >
+  Remplacer le certificat par un certificat validement émis (ex. Let's
+  Encrypt), le renouveler avant expiration, et n'accepter que TLS 1.2 ou
+  1.3.
+
+references:
+  - "https://owasp.org/www-project-secure-headers/"
+  - "https://www.ssllabs.com/ssltest/"
+
+checks: []
+
+confidence:
+  base_score: 0.8
+  multi_source_bonus: 0.2

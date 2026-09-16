@@ -1,0 +1,46 @@
+id: RULE-OPEN-REDIRECT-001
+name: "Redirection ouverte potentielle"
+category: open-redirect
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  La cible redirige vers un hôte externe en suivant une valeur contrôlée
+  dans un paramètre d'URL (en-tête `Location` reflété). Une redirection
+  ouverte peut être détournée pour du phishing ou contourner des
+  validations d'origine.
+
+detection:
+  keywords:
+    - open redirect
+    - url redirect
+    - phishing
+
+validation:
+  method: active
+  description: >
+    Sonde GET bénigne (ES-03) : on envoie une URL pointant vers un domaine
+    fictif (`peer.example.invalid`) dans des paramètres de redirection
+    classiques. Le suivi de la redirection n'est jamais effectué (ES-09) :
+    on se contente de lire l'en-tête `Location` pour vérifier qu'il pointe
+    vers un hôte externe.
+
+evidence_expected:
+  - "Réponse 3xx dont le Location pointe vers un hôte externe après une charge"
+
+recommendation: >
+  Ne jamais rediriger vers une URL externe fournie par l'utilisateur ;
+  utiliser une liste blanche d'hôtes/fichiers de redirection et éviter de
+  refléter directement la valeur de l'utilisateur dans un `Location`.
+
+references:
+  - "https://owasp.org/www-community/attacks/Redirect_Security"
+  - "https://portswigger.net/kb/issues/00500200_open-redirection-reflected"
+
+checks: []
+
+confidence:
+  base_score: 0.7
+  multi_source_bonus: 0.2

@@ -1,0 +1,39 @@
+id: RULE-PERMISSIONS-NOTSET-001
+name: "Permissions Policy Header Not Set"
+category: security_misconfiguration
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  L'en-tête Permissions-Policy n'est pas défini : les fonctionnalités
+  navigateur (microphone, caméra, géolocalisation, notifications...) ne sont
+  pas restreintes par défaut pour les cadres de tiers. Parité OWASP ZAP 10063.
+
+detection:
+  keywords:
+    - permissions-policy
+    - feature-policy
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes des réponses : constat lorsque
+    Permissions-Policy est absent. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "En-tête Permissions-Policy absent"
+
+recommendation: >
+  Définir une politique Permissions-Policy restrictive limitant l'accès aux
+  fonctionnalités sensibles pour les origines non fiables.
+
+references:
+  - "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.1

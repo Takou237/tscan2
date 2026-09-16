@@ -1,0 +1,57 @@
+id: RULE-WAF-001
+name: "Pare-feu applicatif (WAF) détecté"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Un pare-feu applicatif (WAF) filtre les requêtes vers la cible : une sonde
+  portant une charge de test de forme « agressive » est rejetée (statut 412,
+  403/429 avec signature), ou des en-têtes/corps caractéristiques d'un WAF ou
+  d'un CDN de protection sont présents. Ce n'est pas une vulnérabilité en
+  soi, mais un signal de contexte : les résultats « rien trouvé » des autres
+  détections doivent être lus avec précaution, car la sonde a pu être jetée
+  avant d'atteindre l'application.
+
+detection:
+  keywords:
+    - waf
+    - pare-feu applicatif
+    - cloudflare
+    - mod_security
+    - "412"
+
+validation:
+  method: active
+  description: >
+    Sonde GET bénigne (ES-03) : une charge inoffensive ayant la forme de ce
+    qu'un WAF rejette (balise <script>, amorce d'injection SQL) est envoyée
+    sur la racine, en forme brute puis sous plusieurs encodages (URL simple,
+    double, casse mixte, commentaires MySQL) — parallèle du Fuzzer de ZAP.
+    Un statut 412, un 403/429 avec signature WAF, ou une signature
+    d'en-tête (x-waf, cf-ray, …) ou de corps constitue le constat. Si les
+    formes brutes sont bloquées mais que des variantes encodées passent, le
+    filtre est signalé comme contournable par encodage.
+
+evidence_expected:
+  - "Statut 412/429/503 ou 403 avec signature sur une charge de test (brute)"
+  - "En-tête x-waf, cf-ray, x-sucuri-id, … ou corps « request blocked »"
+  - "Variante encodée (URL double, commentaire MySQL) non bloquée => filtre contournable"
+
+recommendation: >
+   Ce signal informe l'analyste : relire les négatifs des autres détections
+   comme potentiellement « filtrés ». Pour tester plus profond, adapter le
+   rythme des requêtes et l'encodage des charges, et confirmer manuellement
+   les constats possibles.
+
+references:
+  - "https://owasp.org/www-community/incident_response_framework#waf"
+  - "https://owasp.org/zap/"
+
+checks: []
+
+confidence:
+  base_score: 0.6
+  multi_source_bonus: 0.1

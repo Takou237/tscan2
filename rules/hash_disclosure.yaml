@@ -1,0 +1,39 @@
+id: RULE-HASH-001
+name: "Hash Disclosure"
+category: information_disclosure
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  La réponse contient des chaînes au format de hachages MD5 (32 caractères
+  hexadécimaux) : un mot de passe ou un jeton haché pourrait être exposé.
+  Parité OWASP ZAP 10097.
+
+detection:
+  keywords:
+    - hash disclosure
+    - md5
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML crawlée : constat pour les chaînes de 32
+    caractères hexadécimaux. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Chaîne hexadécimale de 32 caractères (MD5)"
+
+recommendation: >
+  Vérifier la source des valeurs hachées : ne jamais exposer de mots de passe
+  hachés sans sel côté client, et migrer vers des algorithmes résistants.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/200.html"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.1

@@ -1,0 +1,40 @@
+id: RULE-SENSITIVE-URL-001
+name: "Information Disclosure - Sensitive Information in URL"
+category: information_disclosure
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  Des paramètres d'URL portant des informations sensibles (email, jeton, mot de
+  passe...) ont été observés : ces valeurs peuvent transiter en clair dans les
+  journaux côté serveur et dans l'en-tête Referer. Parité OWASP ZAP 10024.
+
+detection:
+  keywords:
+    - sensitive information in url
+    - informations sensibles dans l'url
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des URLs crawlées : report des paramètres nommés de façon
+    révélatrice (email, token, password, author...). Aucune requête
+    supplémentaire.
+
+evidence_expected:
+  - "URL avec paramètre sensible"
+
+recommendation: >
+  Ne jamais placer de données sensibles dans l'URL : utiliser le corps de la
+  requête (POST) et des identifiants opaques.
+
+references:
+  - "https://www.zaproxy.org/docs/alerts/10024/"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.1

@@ -1,0 +1,40 @@
+id: RULE-CT-MISSING-001
+name: "Content-Type Header Missing"
+category: security_misconfiguration
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  La réponse ne déclare aucun en-tête Content-Type : le navigateur doit deviner
+  le type MIME du contenu (MIME sniffing), ce qui peut aboutir à une
+  interprétation erronée et à l'exécution de contenu inattendu. Parité OWASP
+  ZAP 10096.
+
+detection:
+  keywords:
+    - content-type
+    - mime-sniffing
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes des réponses déjà récoltées : constat lorsque
+    l'en-tête Content-Type est absent. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Réponse sans en-tête Content-Type"
+
+recommendation: >
+  Définir un en-tête Content-Type correct et l'associer à
+  X-Content-Type-Options: nosniff sur chaque réponse.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/345.html"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.15

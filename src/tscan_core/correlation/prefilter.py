@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from tscan_core.models import Finding
+from tscan_core.models import Finding, ScanType
 
 _VALID_SEVERITIES = {"info", "low", "medium", "high", "critical"}
 _VALID_CATEGORIES = {
@@ -75,7 +75,15 @@ def prefilter(finding: Finding) -> PrefilterResult:
         )
         result.score_penalty += 0.15
 
-    if not finding.raw_result:
+    # `raw_result` est le résultat brut d'un outil importé (Nuclei/ZAP/Nessus).
+    # Un constat du scan actif n'en a pas par construction : sa preuve vit dans
+    # la table `Evidence`, et la validation est déjà faite par le moteur (RF-23).
+    # Pénaliser son absence ici ferait chuter à tort le score de tout constat
+    # du scan actif. La pénalité ne s'applique qu'aux résultats importés.
+    is_active_scan = (
+        finding.scan is not None and finding.scan.scan_type == ScanType.ACTIVE_SCAN
+    )
+    if not is_active_scan and not finding.raw_result:
         result.issues.append("Résultat brut d'origine absent (contrevient à ES-07)")
         result.score_penalty += 0.1
 

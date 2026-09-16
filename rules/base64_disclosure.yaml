@@ -1,0 +1,39 @@
+id: RULE-BASE64-001
+name: "Base64 Disclosure"
+category: information_disclosure
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  La réponse contient un long bloc au format base64 : des données encodées
+  (jetons, mots de passe, contenu) pourraient être décodées simplement.
+  Parité OWASP ZAP 10094.
+
+detection:
+  keywords:
+    - base64 disclosure
+    - base64
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML crawlée : constat pour les blobs base64 de taille
+    significative hors data URIs. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Bloc base64 long dans la réponse"
+
+recommendation: >
+  Vérifier que les données sensibles ne sont jamais encodées en base64 dans
+  les réponses, et préférer des jetons opaques.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/200.html"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.1

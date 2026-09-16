@@ -1,0 +1,40 @@
+id: RULE-TABNABBING-001
+name: "Reverse Tabnabbing"
+category: information_disclosure
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  Un lien ouvre une nouvelle page (target="_blank") sans rel="noopener
+  noreferrer" : la page de destination peut accéder à la fenêtre d'origine
+  via window.opener et la réécrire (phishing). Parité OWASP ZAP 10070.
+
+detection:
+  keywords:
+    - reverse tabnabbing
+    - tabnabbing
+    - target blank
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML crawlée : constat pour les liens target="_blank"
+    sans rel="noopener noreferrer". Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Lien target=_blank sans rel=noopener"
+
+recommendation: >
+  Ajouter rel="noopener noreferrer" à tout lien ouvrant un nouvel onglet ou
+  définir les valeurs par défaut du framework utilisé.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/1021.html"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.1

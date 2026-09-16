@@ -1,0 +1,40 @@
+id: RULE-XFO-NOTSET-001
+name: "X-Frame-Options Header Not Set"
+category: security_misconfiguration
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  L'en-tête X-Frame-Options n'est pas défini : la page peut être embarquée
+  dans une frame d'un site tiers (clickjacking). Parité OWASP ZAP 10020.
+
+detection:
+  keywords:
+    - x-frame-options
+    - clickjacking
+    - anti-clickjacking
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes des réponses : constat lorsque
+    X-Frame-Options est absent (ou CSP frame-ancestors non restrictive).
+    Aucune requête supplémentaire.
+
+evidence_expected:
+  - "En-tête X-Frame-Options absent"
+
+recommendation: >
+  Définir X-Frame-Options: DENY (ou SAMEORIGIN), ou préférer la directive CSP
+  frame-ancestors pour les navigateurs modernes.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/1021.html"
+
+checks: []
+
+confidence:
+  base_score: 0.6
+  multi_source_bonus: 0.1

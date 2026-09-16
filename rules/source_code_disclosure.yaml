@@ -1,0 +1,39 @@
+id: RULE-SOURCE-001
+name: "Source Code Disclosure"
+category: information_disclosure
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  La réponse expose des fragments de code source (PHP, Java, Python, SGBD) :
+  le code applicatif ne devrait jamais être renvoyé au client. Parité OWASP
+  ZAP 10099.
+
+detection:
+  keywords:
+    - source code disclosure
+    - source code
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML crawlée : constat pour les marqueurs de code
+    source (<?php, tracebacks, System.out, SQL). Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Fragment de code source dans la réponse"
+
+recommendation: >
+  Interdire le retour de code source au client (configuration du serveur,
+    listage, fichiers d'erreur) et restreindre l'accès aux répertoires de code.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/540.html"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.1

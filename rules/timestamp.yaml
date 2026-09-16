@@ -1,0 +1,42 @@
+id: RULE-TIMESTAMP-001
+name: "Timestamp Disclosure - Unix"
+category: information_disclosure
+severity: low
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Des horodatages Unix (10 chiffres) ont été observés dans les réponses. Ils
+  peuvent révéler des dates de génération ou de version, utiles à un attaquant
+  pour dater des événements internes (fuite d'information). C'est l'alerte
+  ZAP 10096.
+
+detection:
+  keywords:
+    - timestamp
+    - horodatage
+    - unix
+    - disclosure
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du contenu crawlée : constat pour les timestamps Unix dans
+    une plage de dates plausibles (2001-2100). Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Horodatage Unix suivi d'une date lisible"
+
+recommendation: >
+  Réduire les informations de génération dans les réponses (versions,
+  commentaires, dates) qui ne sont pas nécessaires au fonctionnement.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/200.html"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.1

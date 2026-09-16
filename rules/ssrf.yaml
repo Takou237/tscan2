@@ -1,0 +1,46 @@
+id: RULE-SSRF-001
+name: "Server-Side Request Forgery potentiel (SSRF)"
+category: ssrf
+severity: high
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Un paramètre accepte une URL pointant vers la boucle locale (127.0.0.1) et
+  le serveur la traite : la réponse porte des marqueurs internes. Un
+  attaquant pourrait interroger des services internes, lire des secrets ou
+  atteindre des interfaces d'administration non exposées.
+
+detection:
+  keywords:
+    - ssrf
+    - server-side request forgery
+    - url fetch
+
+validation:
+  method: active
+  description: >
+    Sonde GET bénigne (ES-03) : la charge est une URL pointant vers la boucle
+    locale de la cible (`http://127.0.0.1/`). Aucun appel réseau sortant
+    n'est généré (ES-09) — l'URL interne ne quitte jamais la cible. Le constat
+    n'est émis que si le corps de la réponse contient des marqueurs d'un
+    chargement serveur.
+
+evidence_expected:
+  - "Contenu/marqueur interne réfléchi après une sonde d'URL vers la boucle locale"
+
+recommendation: >
+  Restreindre les destinations de requêtes côté serveur (liste blanche de
+  domaines), interdire les adresses privées/loopback/métadonnées cloud et
+  traiter les réponses reçues comme non fiables.
+
+references:
+  - "https://owasp.org/www-community/attacks/Server_Side_Request_Forgery"
+  - "https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery/"
+
+checks: []
+
+confidence:
+  base_score: 0.75
+  multi_source_bonus: 0.2

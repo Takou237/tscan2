@@ -1,0 +1,43 @@
+id: RULE-BIG-REDIRECT-001
+name: "Big Redirect Detected (Potential Sensitive Information Leak)"
+category: information_disclosure
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  Une redirection réponse (3xx) dont l'en-tête Location contient une URI très
+  longue avec chaîne de requête. Des jetons de session, des clés ou d'autres
+  données sensibles peuvent être transférés en clair dans l'URL, s'affichant
+  dans la barre d'adresse, les journaux de proxy et l'en-tête Referer envoyé
+  aux ressources tierces. Parité OWASP ZAP 10043.
+
+detection:
+  keywords:
+    - sensitive-information
+    - information-leak
+    - sensitive-file
+
+validation:
+  method: passive
+  description: >
+    Vérification passive d'une redirection 3xx dont l'URI Location fait plus
+    de 100 caractères et contient une chaîne de requête (?key=...).
+
+evidence_expected:
+  - "URI Location longue avec chaîne de requête"
+
+recommendation: >
+  Limiter la taille de l'URI transmise dans la redirection (utiliser un
+  identifiant court, un identifiant opaque ou stocker les paramètres en
+  session côté serveur).
+
+references:
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Protection_Cheat_Sheet.html"
+
+checks: []
+
+confidence:
+  base_score: 0.45
+  multi_source_bonus: 0.1

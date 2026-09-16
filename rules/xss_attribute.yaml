@@ -1,0 +1,40 @@
+id: RULE-XSS-ATTR-001
+name: "User Controllable HTML Element Attribute (Potential XSS)"
+category: xss
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  Un paramètre de requête contrôlable par l'utilisateur est reflété dans un
+  attribut HTML de la réponse : une valeur malveillante pourrait échapper
+  l'attribut et injecter du balisage (XSS potentiel). Parité OWASP ZAP 10031.
+
+detection:
+  keywords:
+    - user controllable
+    - html element attribute
+    - potential xss
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des pages crawlées : constat lorsqu'un paramètre de
+    requête est reflété dans un attribut HTML. Aucune charge envoyée.
+
+evidence_expected:
+  - "Paramètre de requête reflété dans un attribut HTML"
+
+recommendation: >
+  Échapper systématiquement les valeurs insérées dans les attributs HTML
+  (entités) et valider coté serveur le type attendu.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/79.html"
+
+checks: []
+
+confidence:
+  base_score: 0.3
+  multi_source_bonus: 0.1

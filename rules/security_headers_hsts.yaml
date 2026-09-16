@@ -1,0 +1,45 @@
+id: RULE-HSTS-NOTSET-001
+name: "Strict-Transport-Security Header Not Set"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  L'en-tête Strict-Transport-Security (HSTS) est absent de la réponse du
+  serveur. Le navigateur n'est pas invité à basculer les échanges en HTTPS ni
+  à avertir l'utilisateur en cas de certificat invalide. Les échanges peuvent
+  être interceptés par une attaque de type « Man-in-the-Middle ». Parité
+  OWASP ZAP 10035.
+
+detection:
+  keywords:
+    - strict-transport-security
+    - hsts
+    - tls
+    - ssl
+
+validation:
+  method: passive
+  description: >
+    Vérification passive de la présence de l'en-tête Strict-Transport-Security
+    dans la réponse racine (ou les pages crawlées).
+
+evidence_expected:
+  - "En-tête Strict-Transport-Security absent de la réponse du serveur"
+
+recommendation: >
+  Ajouter l'en-tête Strict-Transport-Security avec une valeur « max-age »
+  suffisamment longue (au moins 6 mois) et envisager l'ajout du paramètre
+  « includeSubDomains ».
+
+references:
+  - "https://owasp.org/www-project-secure-headers/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html"
+
+checks: []
+
+confidence:
+  base_score: 0.6
+  multi_source_bonus: 0.1

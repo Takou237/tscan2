@@ -1,0 +1,43 @@
+id: RULE-CSP-NOTSET-001
+name: "Content Security Policy (CSP) Header Not Set"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  L'en-tête HTTP Content-Security-Policy (CSP) n'est pas défini dans la
+  réponse. Sans politique CSP, le navigateur n'est pas instruit sur les
+  sources de contenu autorisées : les attaques XSS et d'injection de données
+  sont moins bien atténuées. C'est l'alerte ZAP 10038.
+
+detection:
+  keywords:
+    - content-security-policy
+    - csp
+    - xss
+
+validation:
+  method: passive
+  description: >
+    Analyse passive de l'en-tête Content-Security-Policy sur la racine et les
+    pages crawlées : constat si aucune politique n'est présentée (aucune
+    requête supplémentaire).
+
+evidence_expected:
+  - "En-tête Content-Security-Policy absent de la réponse"
+
+recommendation: >
+  Configurer l'en-tête Content-Security-Policy avec une politique restrictive
+  (default-src 'self', directives de ressource explicites) sur le serveur ou
+  le reverse proxy.
+
+references:
+  - "https://owasp.org/www-project-secure-headers/"
+
+checks: []
+
+confidence:
+  base_score: 0.6
+  multi_source_bonus: 0.1

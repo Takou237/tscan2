@@ -1,0 +1,41 @@
+id: RULE-CSP-UNSAFE-INLINE-SCRIPT-001
+name: "CSP: script-src unsafe-inline"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  La directive script-src de la Content-Security-Policy inclut
+  'unsafe-inline' : les scripts en ligne sont autorisés, ce qui affaiblit la
+  protection de base contre XSS. C'est l'alerte ZAP 10055.
+
+detection:
+  keywords:
+    - content-security-policy
+    - csp
+    - unsafe-inline
+    - xss
+
+validation:
+  method: passive
+  description: >
+    Analyse passive de la directive script-src de l'en-tête CSP : constat si
+    elle contient 'unsafe-inline'.
+
+evidence_expected:
+  - "script-src inclut unsafe-inline"
+
+recommendation: >
+  Retirer unsafe-inline de script-src et utiliser une politique de nonce ou
+  de hash pour les scripts en ligne légitimes.
+
+references:
+  - "https://owasp.org/www-project-secure-headers/"
+
+checks: []
+
+confidence:
+  base_score: 0.6
+  multi_source_bonus: 0.1

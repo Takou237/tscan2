@@ -35,5 +35,11 @@ class RuleDefinition:
     confidence_base: float = 0.5
     confidence_multi_source_bonus: float = 0.2
 
+    checks: list[dict] = field(default_factory=list)
+    """Checks déclaratifs de la règle (section `checks:` du YAML, semaine 7b) :
+    conditions simples évaluées par le moteur de scan sur les réponses HTTP
+    (header_absent, clickjacking, path_status). Vide si la règle ne porte
+    aucun check (ex : XSS/CSRF, évalués en code à partir de la semaine 8)."""
+
     source_file: str = ""
     """Chemin du fichier YAML d'origine, renseigné par le chargeur."""

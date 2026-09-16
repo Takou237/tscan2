@@ -1,0 +1,38 @@
+id: RULE-XASPNET-001
+name: "X-AspNet-Version Response Header"
+category: information_disclosure
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  L'en-tête X-AspNet-Version révèle la version précise d'ASP.NET utilisée par
+  l'application : l'attaquant peut cibler des vulnérabilités connues de cette
+  version. Parité OWASP ZAP 10061.
+
+detection:
+  keywords:
+    - x-aspnet-version
+    - asp.net
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes des réponses : constat lorsque
+    X-AspNet-Version est présent. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "En-tête X-AspNet-Version avec version"
+
+recommendation: >
+  Supprimer l'en-tête X-AspNet-Version des réponses (web.config, modules IIS).
+
+references:
+  - "https://cwe.mitre.org/data/definitions/200.html"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.15

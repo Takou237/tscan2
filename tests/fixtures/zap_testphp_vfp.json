@@ -1,0 +1,158 @@
+{
+  "@version": "2.14.0",
+  "@generated": "Fri, 11 Sep 2026 10:05:00",
+  "site": [
+    {
+      "@name": "http://testphp.vulnweb.com",
+      "@host": "testphp.vulnweb.com",
+      "@port": "80",
+      "@ssl": "false",
+      "alerts": [
+        {
+          "pluginid": "10038",
+          "alertRef": "10038",
+          "alert": "Content Security Policy (CSP) Header Not Set",
+          "name": "Content Security Policy (CSP) Header Not Set",
+          "riskcode": "1",
+          "confidence": "3",
+          "riskdesc": "Low (High)",
+          "desc": "<p>Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks.</p>",
+          "instances": [
+            {
+              "uri": "http://testphp.vulnweb.com/",
+              "method": "GET",
+              "param": "",
+              "evidence": "HTTP/1.1 200 OK"
+            }
+          ],
+          "count": "1",
+          "solution": "<p>Ensure that a Content Security Policy header is set on all web pages.</p>",
+          "reference": "https://www.w3.org/TR/CSP/",
+          "cweid": "693",
+          "wascid": "15",
+          "sourceid": "3"
+        },
+        {
+          "pluginid": "10020",
+          "alertRef": "10020",
+          "alert": "X-Frame-Options Header Not Set",
+          "name": "X-Frame-Options Header Not Set",
+          "riskcode": "1",
+          "confidence": "3",
+          "riskdesc": "Low (Medium)",
+          "desc": "<p>When a website is hosted on a server that does not send the X-Frame-Options header, it may be possible for the site to be framed by other websites.</p>",
+          "instances": [
+            {
+              "uri": "http://testphp.vulnweb.com/",
+              "method": "GET",
+              "param": "",
+              "evidence": "HTTP/1.1 200 OK"
+            }
+          ],
+          "count": "1",
+          "solution": "<p>Most modern Web browsers support the X-Frame-Options header. Ensure it is set on all pages.</p>",
+          "reference": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options",
+          "cweid": "1021",
+          "wascid": "15",
+          "sourceid": "3"
+        },
+        {
+          "pluginid": "10021",
+          "alertRef": "10021",
+          "alert": "X-Content-Type-Options Header Missing",
+          "name": "X-Content-Type-Options Header Missing",
+          "riskcode": "1",
+          "confidence": "3",
+          "riskdesc": "Low (Medium)",
+          "desc": "<p>The Anti-MIME-Sniffing header X-Content-Type-Options is not set to 'nosniff'. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body.</p>",
+          "instances": [
+            {
+              "uri": "http://testphp.vulnweb.com/",
+              "method": "GET",
+              "param": "",
+              "evidence": "HTTP/1.1 200 OK"
+            }
+          ],
+          "count": "1",
+          "solution": "<p>Ensure that the X-Content-Type-Options response header is set to 'nosniff'.</p>",
+          "reference": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options",
+          "cweid": "693",
+          "wascid": "15",
+          "sourceid": "3"
+        },
+        {
+          "pluginid": "40012",
+          "alertRef": "40012",
+          "alert": "Cross Site Scripting (Reflected)",
+          "name": "Cross Site Scripting (Reflected)",
+          "riskcode": "3",
+          "confidence": "2",
+          "riskdesc": "High (Medium)",
+          "desc": "<p>Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance.</p>",
+          "instances": [
+            {
+              "uri": "http://testphp.vulnweb.com/listproducts.php?searchFor=%3Cscript%3Ealert(1)%3C%2Fscript%3E",
+              "method": "GET",
+              "param": "searchFor",
+              "evidence": "<script>alert(1)</script>"
+            }
+          ],
+          "count": "1",
+          "solution": "<p>Validate all input and sanitize output.</p>",
+          "reference": "https://owasp.org/www-community/attacks/xss/",
+          "cweid": "79",
+          "wascid": "8",
+          "sourceid": "3"
+        },
+        {
+          "pluginid": "40018",
+          "alertRef": "40018",
+          "alert": "SQL Injection",
+          "name": "SQL Injection - MySQL",
+          "riskcode": "3",
+          "confidence": "3",
+          "riskdesc": "High (High)",
+          "desc": "<p>SQL injection vulnerabilities allow an attacker to inject code into SQL queries executed by the application.</p>",
+          "instances": [
+            {
+              "uri": "http://testphp.vulnweb.com/listproducts.php?cat=1%27",
+              "method": "GET",
+              "param": "cat",
+              "evidence": "Warning: mysql_fetch_array() expects parameter 1 to be resource"
+            }
+          ],
+          "count": "1",
+          "solution": "<p>Use parameterized queries or prepared statements.</p>",
+          "reference": "https://owasp.org/www-community/attacks/SQL_Injection",
+          "cweid": "89",
+          "wascid": "19",
+          "sourceid": "3"
+        },
+        {
+          "pluginid": "10202",
+          "alertRef": "10202",
+          "alert": "Absence of Anti-CSRF Tokens",
+          "name": "Absence of Anti-CSRF Tokens",
+          "riskcode": "2",
+          "confidence": "2",
+          "riskdesc": "Medium (Medium)",
+          "desc": "<p>No Anti-CSRF tokens were found in a HTML submission form.</p>",
+          "instances": [
+            {
+              "uri": "http://testphp.vulnweb.com/cart.php",
+              "method": "POST",
+              "param": "",
+              "evidence": "<form method=\"POST\" action=\"cart.php\">"
+            }
+          ],
+          "count": "1",
+          "solution": "<p>Use anti-CSRF tokens.</p>",
+          "reference": "https://owasp.org/www-community/attacks/csrf",
+          "cweid": "352",
+          "wascid": "9",
+          "sourceid": "3"
+        }
+      ]
+    }
+  ]
+}

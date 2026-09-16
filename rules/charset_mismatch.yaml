@@ -1,0 +1,40 @@
+id: RULE-CHARSET-001
+name: "Charset Mismatch"
+category: security_misconfiguration
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  Le jeu de caractères déclaré par l'en-tête Content-Type diffère de celui
+  annoncé dans la page (balise meta charset) : un contenu mal interprété peut
+  entraîner un affichage altéré voire une injection. Parité OWASP ZAP 90011.
+
+detection:
+  keywords:
+    - charset mismatch
+    - incompatibilité de charset
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des réponses HTML crawlées : comparaison du charset de
+    l'en-tête Content-Type avec la balise meta charset. Aucune requête
+    supplémentaire.
+
+evidence_expected:
+  - "Charset déclaré différent du charset HTML"
+
+recommendation: >
+  Déclarer un charset cohérent dans l'en-tête Content-Type et dans la page,
+  idéalement UTF-8, pour éviter les ambiguïtés d'interprétation.
+
+references:
+  - "https://www.zaproxy.org/docs/alerts/90011/"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.1

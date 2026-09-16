@@ -17,6 +17,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from tscan_core.importers.common import ParsedFinding
+from tscan_core.importers.nessus import parse_nessus_xml
 from tscan_core.importers.nuclei import parse_nuclei_jsonl
 from tscan_core.importers.zap import parse_zap_json
 from tscan_core.models import Finding, Scan, ScanType
@@ -24,6 +25,8 @@ from tscan_core.models import Finding, Scan, ScanType
 _PARSERS = {
     "nuclei": parse_nuclei_jsonl,
     "zap": parse_zap_json,
+    "nessus": parse_nessus_xml,
+    "openvas": parse_nessus_xml,
 }
 
 SUPPORTED_FORMATS = tuple(_PARSERS.keys())
@@ -37,7 +40,8 @@ def import_file(session: Session, source: str, target: str, file_path: str | Pat
     """Importe un fichier de résultats et retourne le `Scan` créé, avec ses
     `Finding` déjà rattachés et commités en base.
 
-    `source` doit être l'une des clés de `SUPPORTED_FORMATS` ('nuclei', 'zap').
+    `source` doit être l'une des clés de `SUPPORTED_FORMATS` ('nuclei', 'zap',
+    'nessus', 'openvas').
     `target` est un libellé de cible fourni par l'utilisateur (RF-24), utile
     pour retrouver ce lot d'import parmi d'autres scans sur des cibles
     différentes.

@@ -1,0 +1,46 @@
+id: RULE-PATH-TRAVERSAL-001
+name: "Traversée de répertoire potentielle (LFI / path traversal)"
+category: path-traversal
+severity: high
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Une charge de traversée (`../`) envoyée dans un paramètre de chemin a
+  permis de lire un contenu hors du répertoire servi : la réponse porte une
+  signature de fichier système/application. Un attaquant pourrait lire
+  d'autres fichiers à la demande.
+
+detection:
+  keywords:
+    - path traversal
+    - lfi
+    - local file inclusion
+    - directory traversal
+
+validation:
+  method: active
+  description: >
+    Sonde GET bénigne (ES-03) : la charge parcourt les répertoires parents et
+    demande un fichier standard (ex. /etc/passwd). Le constat n'est émis que
+    si la réponse contient une signature de ce fichier (ex. `root:x:0:0`) :
+    pas de divulgation si le serveur rejette la requête.
+
+evidence_expected:
+  - "Contenu de fichier système/application dans la réponse à une charge de traversée"
+
+recommendation: >
+  Valider et normaliser les chemins de fichiers côté serveur (résoudre les
+  `..`, interdire les chemins absolus), placer les fichiers sensibles hors de
+  la racine web et servir via une abstraction de stockage sécurisée.
+
+references:
+  - "https://owasp.org/www-community/attacks/Path_Traversal"
+  - "https://owasp.org/Top10/A01_2021-Broken_Access_Control/"
+
+checks: []
+
+confidence:
+  base_score: 0.75
+  multi_source_bonus: 0.2

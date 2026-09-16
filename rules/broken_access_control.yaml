@@ -40,6 +40,24 @@ recommendation: >
 references:
   - "https://owasp.org/Top10/A01_2021-Broken_Access_Control/"
 
+checks:
+  # Checks déclaratifs (semaine 7b) : une sonde GET bénigne par chemin
+  # (jamais de méthode destructive, ES-03), bornée par la durée maximale du
+  # scan. Un statut 200/204/301/302 (exposition) signale un résultat ; les
+  # statuts 401/403/404 sont considérés comme une protection correcte.
+  - id: bac-wp-admin
+    type: path_status
+    path: /wp-admin/
+    description: "Panneau d'administration WordPress accessible sans authentification."
+  - id: bac-admin
+    type: path_status
+    path: /admin/
+    description: "Panneau d'administration accessible sans authentification."
+  - id: bac-config
+    type: path_status
+    path: /config/
+    description: "Répertoire de configuration accessible sans authentification."
+
 confidence:
   base_score: 0.65
   multi_source_bonus: 0.25

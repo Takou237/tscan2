@@ -18,9 +18,11 @@ from tscan_core.models import Finding, ScanType
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def test_supported_formats_contains_nuclei_and_zap() -> None:
+def test_supported_formats_contains_nuclei_zap_nessus_openvas() -> None:
     assert "nuclei" in SUPPORTED_FORMATS
     assert "zap" in SUPPORTED_FORMATS
+    assert "nessus" in SUPPORTED_FORMATS
+    assert "openvas" in SUPPORTED_FORMATS
 
 
 def test_import_nuclei_file_end_to_end() -> None:
@@ -39,6 +41,23 @@ def test_import_nuclei_file_end_to_end() -> None:
         assert len(findings) == 3
         # Le résultat brut d'origine doit être conservé sans modification (RF-05).
         assert all(f.raw_result for f in findings)
+
+
+def test_import_nessus_file_end_to_end() -> None:
+    engine = get_engine(":memory:")
+    init_db(engine)
+
+    with get_session(engine) as session:
+        scan = import_file(
+            session, source="nessus", target="example.test", file_path=FIXTURES / "nessus_sample.nessus"
+        )
+        assert scan.scan_type == ScanType.IMPORT
+        assert scan.source == "nessus"
+
+        findings = session.query(Finding).filter_by(scan_id=scan.id).all()
+        assert len(findings) == 5
+        assert all(f.raw_result for f in findings)
+        assert all(f.matched_at for f in findings)
 
 
 def test_import_zap_file_end_to_end() -> None:
@@ -80,4 +99,4 @@ def test_import_unknown_format_raises() -> None:
     init_db(engine)
 
     with get_session(engine) as session, pytest.raises(UnsupportedFormatError):
-        import_file(session, source="nessus", target="example.test", file_path=FIXTURES / "nuclei_sample.jsonl")
+        import_file(session, source="acunetix", target="example.test", file_path=FIXTURES / "nuclei_sample.jsonl")

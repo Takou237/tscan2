@@ -1,0 +1,59 @@
+# Table d'alias CPE minimale (RF-18, chapitre 4).
+#
+# NVD référence chaque produit sous un identifiant CPE structuré
+# (ex : cpe:2.3:a:jquery:jquery). Le nom lisible saisi par l'utilisateur
+# (ex : "jquery 1.11.0") doit être traduit vers ce référentiel avant toute
+# interrogation : c'est le rôle de cette table (alias "nom produit courant"
+# -> "vendeur:produit CPE").
+#
+# Chaque entrée a été vérifiée contre l'API NVD cpes/2.0 : le produit et une
+# version de test existent réellement dans le dictionnaire CPE (août 2026).
+# La table est volontairement restreinte aux composants web couramment
+# rencontrés par le moteur de Tscan ; elle s'étend librement sans toucher au
+# code. Les produits sans correspondance CPE vérifiée retombent sur la
+# recherche par mot-clé NVD (comportement historique du bloc connaissances).
+
+- product: apache # serveur HTTP Apache
+  cpe: apache:http_server
+
+- product: bootstrap
+  cpe: getbootstrap:bootstrap
+
+- product: django
+  cpe: djangoproject:django
+
+- product: iis
+  cpe: microsoft:internet_information_services
+
+- product: joomla
+  cpe: joomla:joomla\! # le '!' fait partie du nom CPE officiel de Joomla
+
+- product: jquery
+  cpe: jquery:jquery
+
+- product: jquery-ui
+  cpe: jquery:jquery_ui
+
+- product: jquery ui
+  cpe: jquery:jquery_ui
+
+- product: mariadb
+  cpe: mariadb:mariadb
+
+- product: mysql
+  cpe: oracle:mysql
+
+- product: nginx
+  cpe: nginx:nginx
+
+- product: openssl
+  cpe: openssl:openssl
+
+- product: php
+  cpe: php:php
+
+- product: tomcat
+  cpe: apache:tomcat
+
+- product: wordpress
+  cpe: wordpress:wordpress

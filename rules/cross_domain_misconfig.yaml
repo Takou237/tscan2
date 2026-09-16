@@ -1,0 +1,40 @@
+id: RULE-CROSS-DOMAIN-001
+name: "Cross-Domain Misconfiguration"
+category: security_misconfiguration
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  La réponse expose une configuration CORS permissive (origine sauvage ou
+  reflétée) : un domaine tiers pourrait lire le contenu de la réponse,
+  y compris des données personnelles. Parité OWASP ZAP 10098.
+
+detection:
+  keywords:
+    - cross-domain misconfiguration
+    - mauvaise configuration inter-domaines
+    - configuration inter-domaines
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes Access-Control-Allow-Origin des réponses
+    crawlées (origine sauvage ou reflet). Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Access-Control-Allow-Origin permissif"
+
+recommendation: >
+  Restreindre CORS à une liste blanche d'origines fiables, ne jamais utiliser
+  de joker avec des identifiants, et valider les origines côté serveur.
+
+references:
+  - "https://www.zaproxy.org/docs/alerts/10098/"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.1

@@ -1,0 +1,39 @@
+id: RULE-XCHROME-001
+name: "X-ChromeLogger-Data Header Information Leak"
+category: information_disclosure
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  L'en-tête X-ChromeLogger-Data transporte des données de journalisation PHP
+  (variables, traces SQL) vers la console Chrome : une fuite d'informations
+  techniques en production. Parité OWASP ZAP 10052.
+
+detection:
+  keywords:
+    - x-chromelogger
+    - chromelogger
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes des réponses : constat lorsque
+    X-ChromeLogger-Data est présent. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "En-tête X-ChromeLogger-Data présent"
+
+recommendation: >
+  Désactiver l'extension ChromeLogger en production et retirer l'en-tête des
+  réponses.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/200.html"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.1

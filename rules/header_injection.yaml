@@ -1,0 +1,45 @@
+id: RULE-HDR-INJECTION-001
+name: "Injection de headers HTTP potentielle (CRLF)"
+category: header-injection
+severity: high
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Un paramètre d'URL est réfléchi dans un en-tête de réponse personnalisé
+  sans filtrage des caractères de contrôle (CRLF). Un attaquant pourrait
+  injecter des en-têtes arbitraires (Set-Cookie, cache, authentification)
+  via les paramètres d'URL.
+
+detection:
+  keywords:
+    - header injection
+    - crlf injection
+    - response splitting
+
+validation:
+  method: active
+  description: >
+    Sonde GET bénigne (ES-03) : on injecte un marqueur alphanumérique dans un
+    paramètre et on vérifie qu'il apparaît dans un en-tête personnalisé de la
+    réponse. Le marqueur n'a aucun effet de bord ; c'est la preuve que le
+    serveur reflète des valeurs contrôlées dans la zone des en-têtes.
+
+evidence_expected:
+  - "Marqueur reflété dans un en-tête de réponse personnalisé"
+
+recommendation: >
+  Filtrer les caractères de contrôle (CR/LF) dans les entrées utilisateur,
+  ne jamais les placer dans la zone des en-têtes de réponse et encoder
+  correctement les valeurs reflétées.
+
+references:
+  - "https://owasp.org/www-community/attacks/HTTP_Response_Splitting"
+  - "https://portswigger.net/kb/issues/00400200_http-header-injection"
+
+checks: []
+
+confidence:
+  base_score: 0.75
+  multi_source_bonus: 0.2

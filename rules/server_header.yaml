@@ -1,0 +1,39 @@
+id: RULE-SERVER-HEADER-001
+name: "Server Header Information Leak"
+category: information_disclosure
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  L'en-tête HTTP Server révèle le nom et souvent la version du serveur web
+  (Apache/2.4.53, nginx/1.24...). Cette information aide l'attaquant à choisir
+  son exploitation. Parité OWASP ZAP 10026.
+
+detection:
+  keywords:
+    - server header
+    - server response header
+    - banner-grab
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes des réponses : constat lorsque l'en-tête
+    Server est présent. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "En-tête Server avec nom et version"
+
+recommendation: >
+  Supprimer ou normaliser l'en-tête Server en périphérie (reverse proxy, WAF).
+
+references:
+  - "https://cwe.mitre.org/data/definitions/200.html"
+
+checks: []
+
+confidence:
+  base_score: 0.45
+  multi_source_bonus: 0.15

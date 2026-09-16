@@ -1,0 +1,42 @@
+id: RULE-SUSPICOMM-001
+name: "Information Disclosure - Suspicious Comments"
+category: information_disclosure
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  Le code HTML des réponses contient des commentaires suspicieux (TODO, FIXME,
+  HACK, BUG, XXX) qui peuvent révéler des fonctionnalités inachevées, des
+  failles connues ou des points d'entrée internes. Parité OWASP ZAP 10027.
+
+detection:
+  keywords:
+    - suspicious comment
+    - todo
+    - fixme
+    - hack
+    - information-disclosure
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML crawlée : constat pour tout commentaire portant
+    un marqueur suspicieux. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Commentaire HTML avec marqueur TODO/FIXME/HACK/BUG/XXX"
+
+recommendation: >
+  Retirer les commentaires de développement du code servi, ou les documenter
+  explicitement quand ils sont volontaires.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/615.html"
+
+checks: []
+
+confidence:
+  base_score: 0.45
+  multi_source_bonus: 0.1

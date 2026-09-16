@@ -1,0 +1,46 @@
+id: RULE-CMD-INJECTION-001
+name: "Injection de commande OS potentielle"
+category: cmd-injection
+severity: critical
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Une charge de test bénigne (`; echo TSCAN-OK`) envoyée dans un paramètre
+  provoque l'exécution d'un sous-shell côté serveur et le marqueur est
+  reflété dans la réponse. Un attaquant pourrait exécuter n'importe quelle
+  commande du système.
+
+detection:
+  keywords:
+    - command injection
+    - os injection
+    - shell injection
+    - rce
+
+validation:
+  method: active
+  description: >
+    Sonde GET bénigne et non destructive (ES-03) : la charge ne fait
+    qu'afficher un marqueur (`TSCAN-OK`) ; aucune modification de fichier,
+    aucune exfiltration, aucun appel réseau sortant (ES-09). Le constat n'est
+    émis que si le marqueur apparaît dans la réponse.
+
+evidence_expected:
+  - "Marqueur écho réfléchi dans la réponse après une charge de shell"
+
+recommendation: >
+  Ne jamais concaténer des entrées utilisateur dans des commandes shell ;
+  utiliser les API de la plateforme sans passer par un interpréteur et
+  valider/normaliser strictement les entrées.
+
+references:
+  - "https://owasp.org/www-community/attacks/Command_Injection"
+  - "https://owasp.org/Top10/A03_2021-Injection/"
+
+checks: []
+
+confidence:
+  base_score: 0.85
+  multi_source_bonus: 0.15

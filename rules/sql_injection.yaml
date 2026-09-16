@@ -1,0 +1,46 @@
+id: RULE-SQLI-001
+name: "Injection SQL potentielle (erreurs de base de données exposées)"
+category: sqli
+severity: high
+version: "1.0.0"
+created_at: "2026-08-19"
+updated_at: "2026-08-19"
+
+description: >
+  Une charge de test bénigne (crochet + commentaire SQL) envoyée dans un
+  paramètre provoque une erreur SQL qui remonte dans la réponse : la
+  requête transcrit le paramètre sans requête préparée. Une exploitation
+  réelle pourrait altérer ou exfiltrer des données.
+
+detection:
+  keywords:
+    - sqli
+    - sql injection
+    - error-based
+
+validation:
+  method: active
+  description: >
+    Détection active non destructive (ES-03) : la charge envoyée est
+    parfaitement inoffensive (un guillemet et un commentaire de ligne) ;
+    elle ne peut pas modifier de données, seulement déclencher une erreur de
+    syntaxe côté serveur. Le constat repose sur des marqueurs d'erreur SQL
+    explicites dans la réponse (syntax error, unclosed quotation, ORA-...).
+
+evidence_expected:
+  - "Message d'erreur SQL dans la réponse serveur en présence de la charge"
+
+recommendation: >
+  Remplacer la concaténation de requêtes par des requêtes préparées /
+  paramétrées, et ne jamais exposer les messages d'erreur internes aux
+  visiteurs.
+
+references:
+  - "https://owasp.org/www-community/attacks/SQL_Injection"
+  - "https://owasp.org/Top10/A03_2021-Injection/"
+
+checks: []
+
+confidence:
+  base_score: 0.8
+  multi_source_bonus: 0.2

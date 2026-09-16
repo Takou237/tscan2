@@ -67,6 +67,7 @@ def _to_rule_definition(data: dict, source_file: Path) -> RuleDefinition:
         references=list(data.get("references", [])),
         confidence_base=float(confidence.get("base_score", 0.5)),
         confidence_multi_source_bonus=float(confidence.get("multi_source_bonus", 0.2)),
+        checks=list(data.get("checks", []) or []),
         source_file=str(source_file),
     )
 

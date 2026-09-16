@@ -1,0 +1,39 @@
+id: RULE-AUTH-REQ-001
+name: "Authentication Request Identified"
+category: security_misconfiguration
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  Une requête d'authentification (formulaire de connexion, inscription) a été
+  identifiée sur la cible : la gestion des identifiants mérite une revue
+  d'authentification. Parité OWASP ZAP 10111.
+
+detection:
+  keywords:
+    - authentication request
+    - requête d'authentification
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML et des URLs crawlées : formulaire avec champ mot de
+    passe ou URL/action d'authentification. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Requête d'authentification détectée"
+
+recommendation: >
+  Vérifier la robustesse du flux d'authentification (verrouillage, facteur
+  supplémentaire, protection anti-brute-force).
+
+references:
+  - "https://www.zaproxy.org/docs/alerts/10111/"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.1

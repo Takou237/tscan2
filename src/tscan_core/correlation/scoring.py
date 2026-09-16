@@ -42,19 +42,67 @@ class ScoringResult:
     matched_rule_id: str | None = None
 
 
+def _resolve_rule(
+    finding: Finding,
+    rules_by_category: dict[str, RuleDefinition | list[RuleDefinition]],
+    rules_by_id: dict[str, RuleDefinition] | None = None,
+) -> RuleDefinition | None:
+    """Retourne la règle applicable à un résultat (RF-10, RF-13).
+
+    Ordre de résolution :
+
+    1. Un `rule_id` déjà attribué au résultat (ex. par le moteur de scan
+       actif) et présent dans `rules_by_id` prime toujours sur la résolution
+       par catégorie, même quand celle-ci est ambiguë.
+    2. Sinon, on consulte la catégorie du résultat :
+       - une seule règle -> c'est elle ;
+       - plusieurs règles partagent la catégorie (ex. `security_misconfiguration`,
+         famille en-têtes ET famille TLS) -> on désambiguïse par les mots-clés
+         de détection de la règle présents dans le titre du résultat, en
+         tranchant l'égalité par le score de base le plus élevé. C'est la
+         correction du bug « toute la catégorie écrasée par la dernière règle
+         chargée » : on ne prend plus le dernier élément d'un dict, on el en
+         choisit une selon le constat.
+    """
+    if rules_by_id and finding.rule_id in rules_by_id:
+        return rules_by_id[finding.rule_id]
+
+    entry = rules_by_category.get(finding.category)
+    if entry is None:
+        return None
+    if isinstance(entry, RuleDefinition):
+        return entry
+
+    candidates = [rule for rule in entry if isinstance(rule, RuleDefinition)]
+    if not candidates:
+        return None
+
+    text = (finding.title or "").lower()
+
+    def _rank(rule: RuleDefinition) -> tuple[int, float]:
+        hits = sum(1 for kw in rule.detection_keywords if kw and kw in text)
+        return (hits, rule.confidence_base)
+
+    return max(candidates, key=_rank)
+
+
 def score_finding(
     finding: Finding,
-    rules_by_category: dict[str, RuleDefinition],
+    rules_by_category: dict[str, RuleDefinition | list[RuleDefinition]],
     correlation_group: CorrelationGroup | None,
+    rules_by_id: dict[str, RuleDefinition] | None = None,
 ) -> ScoringResult:
     """Calcule le score de confiance d'un résultat et le statut qui en découle.
 
     `rules_by_category` permet de retrouver la règle applicable à la
-    catégorie du résultat. `correlation_group` est le groupe de corrélation
-    (RF-09) auquel ce résultat appartient, s'il en existe un.
+    catégorie du résultat (une seule ou plusieurs pour une catégorie partagée,
+    résolue par `_resolve_rule`). `rules_by_id` permet au moteur de scan actif
+    de privilégier l'identifiant de règle explicitement attribué au résultat.
+    `correlation_group` est le groupe de corrélation (RF-09) auquel ce résultat
+    appartient, s'il en existe un.
     """
     explanation: list[str] = []
-    rule = rules_by_category.get(finding.category)
+    rule = _resolve_rule(finding, rules_by_category, rules_by_id)
 
     if rule is not None:
         score = rule.confidence_base

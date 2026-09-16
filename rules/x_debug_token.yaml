@@ -1,0 +1,40 @@
+id: RULE-XDEBUG-001
+name: "X-Debug-Token Information Leak"
+category: information_disclosure
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  L'en-tête X-Debug-Token (Symfony) expose un identifiant de profil de
+  performance : il indique que le paquet de débogage est actif en production et
+  peut exposer la profiler. Parité OWASP ZAP 10056.
+
+detection:
+  keywords:
+    - x-debug-token
+    - debug-token
+    - symfony
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes des réponses : constat lorsque
+    X-Debug-Token est présent. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "En-tête X-Debug-Token présent"
+
+recommendation: >
+  Désactiver le profiler/debug de l'application en production et retirer
+  l'en-tête X-Debug-Token.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/200.html"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.1

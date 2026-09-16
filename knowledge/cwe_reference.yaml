@@ -1,0 +1,56 @@
+# Table de référence CWE minimale (RF-33, chapitre 4).
+#
+# Contrairement à CVE/NVD et CISA KEV, CWE n'est pas synchronisé depuis le
+# réseau : c'est une taxonomie de types de faiblesses (pas d'instances), qui
+# ne sert dans Tscan qu'en métadonnée complémentaire sur les règles et les
+# résultats, pas dans la logique de détection elle-même (celle-ci repose sur
+# la taxonomie propre à Tscan définie dans tscan_core.finding_types).
+#
+# Ce fichier ne contient donc que le sous-ensemble de CWE directement
+# pertinent pour les cinq familles du MVP, pas la taxonomie complète du
+# MITRE (plusieurs centaines d'entrées, dont l'essentiel serait sans usage
+# ici). Il peut être étendu librement sans toucher au code.
+
+- id: CWE-79
+  name: "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+  category: xss
+
+- id: CWE-352
+  name: "Cross-Site Request Forgery (CSRF)"
+  category: csrf
+
+- id: CWE-284
+  name: "Improper Access Control"
+  category: broken_access_control
+
+- id: CWE-862
+  name: "Missing Authorization"
+  category: broken_access_control
+
+- id: CWE-863
+  name: "Incorrect Authorization"
+  category: broken_access_control
+
+- id: CWE-1104
+  name: "Use of Unmaintained Third Party Components"
+  category: vulnerable_component
+
+- id: CWE-937
+  name: "Using Components with Known Vulnerabilities"
+  category: vulnerable_component
+
+- id: CWE-16
+  name: "Configuration"
+  category: security_misconfiguration
+
+- id: CWE-693
+  name: "Protection Mechanism Failure"
+  category: security_misconfiguration
+
+- id: CWE-1021
+  name: "Improper Restriction of Rendered UI Layers or Frames (Clickjacking)"
+  category: security_misconfiguration
+
+- id: CWE-89
+  name: "SQL Injection"
+  category: sqli

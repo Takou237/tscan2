@@ -1,0 +1,41 @@
+id: RULE-CSP-UNSAFE-INLINE-STYLE-001
+name: "CSP: style-src unsafe-inline"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  La directive style-src de la Content-Security-Policy inclut
+  'unsafe-inline' : les styles en ligne sont autorisés, ce qui peut servir de
+  vecteur à des attaques de type claquage de contenu. C'est l'alerte ZAP 10055.
+
+detection:
+  keywords:
+    - content-security-policy
+    - csp
+    - unsafe-inline
+    - xss
+
+validation:
+  method: passive
+  description: >
+    Analyse passive de la directive style-src de l'en-tête CSP : constat si
+    elle contient 'unsafe-inline'.
+
+evidence_expected:
+  - "style-src inclut unsafe-inline"
+
+recommendation: >
+  Retirer unsafe-inline de style-src et privilégier des feuilles de style
+  chargées en externe.
+
+references:
+  - "https://owasp.org/www-project-secure-headers/"
+
+checks: []
+
+confidence:
+  base_score: 0.6
+  multi_source_bonus: 0.1

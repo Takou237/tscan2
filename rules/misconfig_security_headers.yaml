@@ -46,6 +46,36 @@ recommendation: >
 references:
   - "https://owasp.org/www-project-secure-headers/"
 
+checks:
+  # Checks déclaratifs (semaine 7b) : un résultat par en-tête manquant,
+  # évalués par le moteur de scan sur la réponse racine, sans requête
+  # supplémentaire. Les en-têtes de la liste sont ceux recommandés par
+  # l'OWASP Secure Headers Project.
+  - id: header-csp
+    type: header_absent
+    header: Content-Security-Policy
+    description: "En-tête Content-Security-Policy absent : aucune restriction des sources de contenu."
+  - id: header-x-frame-options
+    type: header_absent
+    header: X-Frame-Options
+    description: "En-tête X-Frame-Options absent : l'intégration dans une iframe n'est pas contrôlée (voir aussi la règle clickjacking)."
+  - id: header-hsts
+    type: header_absent
+    header: Strict-Transport-Security
+    description: "En-tête Strict-Transport-Security absent : aucune politique de transport strict annoncée aux navigateurs."
+  - id: header-content-type-options
+    type: header_absent
+    header: X-Content-Type-Options
+    description: "En-tête X-Content-Type-Options absent : le sniffing de type MIME n'est pas désactivé."
+  - id: header-referrer-policy
+    type: header_absent
+    header: Referrer-Policy
+    description: "En-tête Referrer-Policy absent : la quantité d'informations transmise dans le Referer n'est pas bornée."
+  - id: header-permissions-policy
+    type: header_absent
+    header: Permissions-Policy
+    description: "En-tête Permissions-Policy absent : les capacités du navigateur (caméra, géolocalisation...) ne sont pas restreintes."
+
 confidence:
   base_score: 0.6
   multi_source_bonus: 0.25

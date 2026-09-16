@@ -100,3 +100,82 @@ def test_score_finding_never_exceeds_bounds() -> None:
     )
     result = score_finding(finding, {"xss": generous_rule}, correlation_group=group)
     assert result.score <= 1.0
+
+
+def test_score_finding_prefers_explicit_rule_id_over_category() -> None:
+    """Un `rule_id` déjà attribué (ex. par le moteur de scan actif) prime sur la
+    résolution par catégorie, même quand celle-ci est ambiguë."""
+    finding = _make_finding(
+        category="security_misconfiguration", rule_id="RULE-MISCONFIG-001"
+    )
+    headers_rule = RuleDefinition(
+        id="RULE-MISCONFIG-001", name="En-tête manquant", category="security_misconfiguration",
+        severity="info", version="1.0.0", description="...",
+        detection_keywords=["csp", "content-security-policy"], confidence_base=0.6,
+    )
+    tls_rule = RuleDefinition(
+        id="RULE-TLS-WEAK-001", name="TLS faible", category="security_misconfiguration",
+        severity="medium", version="1.0.0", description="...",
+        detection_keywords=["tls", "certificate"], confidence_base=0.8,
+    )
+    result = score_finding(
+        finding,
+        {"security_misconfiguration": [headers_rule, tls_rule]},
+        correlation_group=None,
+        rules_by_id={"RULE-MISCONFIG-001": headers_rule, "RULE-TLS-WEAK-001": tls_rule},
+    )
+    assert result.matched_rule_id == "RULE-MISCONFIG-001"
+    assert result.score == 0.6
+
+
+def test_score_finding_disambiguates_shared_category_by_keywords() -> None:
+    """Catégorie partagée `security_misconfiguration` : un constat CSP doit
+    correspondre à la règle des en-têtes (et non à la règle TLS), grâce aux
+    mots-clés de détection — régression du bug « toute la catégorie écrasée par
+    la dernière règle chargée »."""
+    finding = _make_finding(
+        title="Missing Content-Security-Policy Header",
+        category="security_misconfiguration",
+    )
+    headers_rule = RuleDefinition(
+        id="RULE-MISCONFIG-001", name="En-tête manquant", category="security_misconfiguration",
+        severity="info", version="1.0.0", description="...",
+        detection_keywords=["csp", "content-security-policy"], confidence_base=0.6,
+    )
+    tls_rule = RuleDefinition(
+        id="RULE-TLS-WEAK-001", name="TLS faible", category="security_misconfiguration",
+        severity="medium", version="1.0.0", description="...",
+        detection_keywords=["tls", "certificate"], confidence_base=0.8,
+    )
+    result = score_finding(
+        finding,
+        {"security_misconfiguration": [headers_rule, tls_rule]},
+        correlation_group=None,
+    )
+    assert result.matched_rule_id == "RULE-MISCONFIG-001"
+    assert result.score == 0.6
+
+
+def test_score_finding_shared_category_tie_breaks_by_base_score() -> None:
+    """À nombre de mots-clés égal (ex. une sonde TLS dont le titre porte aussi
+    ssl/tls), on retient la règle au score de base le plus élevé."""
+    finding = _make_finding(
+        title="SSL/TLS misconfiguration detected", category="security_misconfiguration"
+    )
+    headers_rule = RuleDefinition(
+        id="RULE-MISCONFIG-001", name="En-tête manquant", category="security_misconfiguration",
+        severity="info", version="1.0.0", description="...",
+        detection_keywords=["ssl", "tls"], confidence_base=0.6,
+    )
+    tls_rule = RuleDefinition(
+        id="RULE-TLS-WEAK-001", name="TLS faible", category="security_misconfiguration",
+        severity="medium", version="1.0.0", description="...",
+        detection_keywords=["ssl", "tls", "certificate"], confidence_base=0.8,
+    )
+    result = score_finding(
+        finding,
+        {"security_misconfiguration": [headers_rule, tls_rule]},
+        correlation_group=None,
+    )
+    assert result.matched_rule_id == "RULE-TLS-WEAK-001"
+    assert result.score == 0.8

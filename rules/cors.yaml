@@ -1,0 +1,45 @@
+id: RULE-CORS-001
+name: "Politique CORS permissive"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-08-19"
+updated_at: "2026-08-19"
+
+description: >
+  L'en-tête Access-Control-Allow-Origin autorise toutes les origines (valeur
+  « * ») ou reflète l'origine envoyée en la combinant avec les credentials :
+  un site malveillant peut alors lire les réponses de ressources
+  authentifiées de la cible (exfiltration de données via le navigateur de la
+  victime).
+
+detection:
+  keywords:
+    - cors
+    - cross origin
+    - access-control-allow-origin
+
+validation:
+  method: active
+  description: >
+    Sonde GET bénigne : une requête avec un en-tête Origin d'un domaine de
+    test est envoyée sur la cible. Le reflet de cette origine ou la valeur
+    « * » avec Access-Control-Allow-Credentials constitue le constat.
+    Aucune connexion vers le domaine de test n'est établie.
+
+evidence_expected:
+  - "Valeur permissive d'Access-Control-Allow-Origin dans la réponse"
+
+recommendation: >
+   Restreindre Access-Control-Allow-Origin à une liste explicite de domaines
+   de confiance, sans jamais associer « * » aux credentials.
+
+references:
+  - "https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny"
+  - "https://developer.mozilla.org/fr/docs/Web/HTTP/CORS"
+
+checks: []
+
+confidence:
+  base_score: 0.7
+  multi_source_bonus: 0.2

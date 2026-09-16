@@ -1,0 +1,42 @@
+id: RULE-CACHE-CONTROL-001
+name: "Re-examine Cache-control Directives"
+category: security_misconfiguration
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  La réponse ne déclare pas de directives Cache-Control restrictives :
+  le contenu peut être mis en cache par le navigateur ou un proxy et relu
+  ultérieurement, ce qui expose des données à caractère personnel ou des
+  jetons. Parité OWASP ZAP 10049.
+
+detection:
+  keywords:
+    - cache-control
+    - cache
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes cache des réponses : constat lorsque la
+    directive Cache-Control est absente ou ne contient ni no-store ni
+    no-cache sur du HTML. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Réponse HTML sans Cache-Control no-store/no-cache"
+
+recommendation: >
+  Positionner des directives Cache-Control adaptées au contenu : no-store sur
+  les pages sensibles, et une stratégie de cache maîtrisée pour les ressources
+  statiques.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/525.html"
+
+checks: []
+
+confidence:
+  base_score: 0.5
+  multi_source_bonus: 0.15

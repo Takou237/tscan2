@@ -1,0 +1,41 @@
+id: RULE-XDOMAIN-JS-001
+name: "Cross-Domain JavaScript Source File Inclusion"
+category: security_misconfiguration
+severity: low
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  La page inclut un ou plusieurs fichiers JavaScript servis par un domaine
+  tiers. Ces dépendances peuvent exécuter du code dans le contexte de la page
+  cible ; leur compromission affecterait la cible. C'est l'alerte ZAP 10017.
+
+detection:
+  keywords:
+    - javascript
+    - cross-domain
+    - script
+    - third-party
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML crawlée : constat pour tout <script src>
+    pointant vers un domaine externe. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "<script src> pointant vers un domaine tiers"
+
+recommendation: >
+  Charger les scripts uniquement depuis des sources de confiance, et de
+  préférence auto-hébergées ou vérifiées (SRI).
+
+references:
+  - "https://cwe.mitre.org/data/definitions/829.html"
+
+checks: []
+
+confidence:
+  base_score: 0.55
+  multi_source_bonus: 0.1

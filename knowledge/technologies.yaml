@@ -1,0 +1,91 @@
+# Signatures de fingerprinting des technologies web (RF-16, chapitre 4).
+#
+# Chaque entrée décrit une technologie et les signatures passives qui
+# permettent de la détecter (en-tête HTTP ou contenu de page) sans aucun
+# test actif : la phase de reconnaissance ne fait que lire.
+#
+# Règles du format :
+#   * `name`        : identifiant machine de la technologie.
+#   * `label`       : nom affichable.
+#   * `cpe_alias`   : nom de l'alias dans knowledge/cpe_aliases.yaml lorsque la
+#                     technologie y figure (le produit CPE correspondant a été
+#                     vérifié contre l'API NVD). Absent si aucune référence
+#                     CPE vérifiée n'existe.
+#   * `matchers`    : liste de signatures. Chaque signature est soit
+#                       - header : nom de l'en-tête HTTP (insensible à la
+#                         casse) + pattern regex appliqué à sa valeur ;
+#                       - body   : pattern regex appliqué au corps de la page.
+#     Le premier groupe de capture de la regex, s'il existe, porte la version.
+#     Une technologie est détectée dès qu'une de ses signatures matche ; la
+#     première version trouvée est conservée.
+#
+# Les signatures sont volontairement restrictives (anchors ^ sur les en-têtes,
+# motifs précis dans le corps) pour limiter les faux positifs : la détection
+# d'une technologie déclenche la recherche de CVE associées (RF-18), une
+# fausse détection y ferait aussi un faux résultat.
+
+- name: apache
+  label: "Apache HTTP Server"
+  cpe_alias: apache
+  matchers:
+    - header: Server
+      pattern: "^Apache/([0-9.]+)"
+
+- name: nginx
+  label: "NGINX"
+  cpe_alias: nginx
+  matchers:
+    - header: Server
+      pattern: "^nginx(?:/([0-9.]+))?"
+
+- name: iis
+  label: "Microsoft IIS"
+  cpe_alias: iis
+  matchers:
+    - header: Server
+      pattern: "^Microsoft-IIS(?:/([0-9.]+))?"
+
+- name: tomcat
+  label: "Apache Tomcat"
+  cpe_alias: tomcat
+  matchers:
+    - header: Server
+      pattern: "^Apache-Coyote(?:/([0-9.]+))?"
+
+- name: php
+  label: "PHP"
+  cpe_alias: php
+  matchers:
+    - header: X-Powered-By
+      pattern: "^PHP(?:/([0-9.]+))?"
+
+- name: python-werkzeug
+  label: "Python WSGI (Werkzeug)"
+  matchers:
+    - header: Server
+      pattern: "^Werkzeug(?:/([0-9.]+))?"
+
+- name: wordpress
+  label: "WordPress"
+  cpe_alias: wordpress
+  matchers:
+    - body: '(?i)<meta[^>]+name="generator"[^>]+content="WordPress\s*([0-9.]+)"'
+    - body: "(?i)wp-(content|includes)/"
+
+- name: joomla
+  label: "Joomla"
+  cpe_alias: joomla
+  matchers:
+    - body: '(?i)<meta[^>]+name="generator"[^>]+content="Joomla!\s*([0-9.]+)'
+
+- name: jquery
+  label: "jQuery"
+  cpe_alias: jquery
+  matchers:
+    - body: "(?i)(?:jquery(?:-([0-9.]+))?(?:\\.min)?\\.js|\\?ver=([0-9.]+))"
+
+- name: bootstrap
+  label: "Bootstrap"
+  cpe_alias: bootstrap
+  matchers:
+    - body: "(?i)bootstrap(?:\\.min)?\\.(?:css|js)"

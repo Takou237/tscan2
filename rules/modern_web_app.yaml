@@ -1,0 +1,41 @@
+id: RULE-MODERN-APP-001
+name: "Modern Web Application"
+category: information_disclosure
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  La page utilise des API JavaScript modernes (ES6+, fetch, WebSockets,
+  localStorage, Service Workers, framework JavaScript) : la surface d'attaque
+  côté client diffère d'un site classique et mérite une analyse ciblée
+  (DOM XSS, attaques de chaîne d'approvisionnement). Parité OWASP ZAP 10101.
+
+detection:
+  keywords:
+    - modern web application
+    - javascript
+    - framework
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML/JS crawlée : constat lorsque des marqueurs de
+    code moderne sont présents. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Marqueurs ES6+/API navigateur dans le HTML"
+
+recommendation: >
+    Inclure la partie client (SPA, Web API) dans le périmètre d'analyse
+    dédiée : DOM XSS, dépendances JavaScript, Surface d'attaque des API.
+
+references:
+  - "https://owasp.org/www-project-top-ten/"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.1

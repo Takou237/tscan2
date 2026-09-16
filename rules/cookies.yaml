@@ -1,0 +1,46 @@
+id: RULE-COOKIE-001
+name: "Cookie de session sans drapeaux de sécurité complets"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Un ou plusieurs cookies envoyés par la cible ne portent pas tous les
+  drapeaux de sécurité : HttpOnly (invisible au JavaScript), Secure
+  (transmission uniquement en HTTPS) ou SameSite (contrainte d'envoi
+  cross-site). En leur absence, le cookie de session devient une cible plus
+  facile pour le vol via XSS, l'interception réseau ou le détournement CSRF.
+
+detection:
+  keywords:
+    - cookie
+    - session
+    - httponly
+    - samesite
+    - secure
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes Set-Cookie déjà collectés dans les réponses
+    de reconnaissance et de crawl : aucun envoi supplémentaire de requête.
+
+evidence_expected:
+  - "En-tête Set-Cookie observé sans HttpOnly, Secure ou SameSite"
+
+recommendation: >
+  Positionner sur chaque cookie de session les attributs HttpOnly, Secure et
+  SameSite (au moins Lax), et, si le site est en HTTPS uniquement, le
+  préfixe __Host- quand possible.
+
+references:
+  - "https://owasp.org/www-community/controls/SecureCookieAttribute"
+  - "https://developer.mozilla.org/fr/docs/Web/HTTP/Cookies"
+
+checks: []
+
+confidence:
+  base_score: 0.7
+  multi_source_bonus: 0.15

@@ -1,0 +1,41 @@
+id: RULE-XPOWEREDBY-001
+name: "Server Leaks Information via \"X-Powered-By\" HTTP Response Header Field(s)"
+category: information_disclosure
+severity: low
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  L'en-tête X-Powered-By révèle la technologie derrière le serveur ou
+  l'application web (nom et version : PHP/7.4, Express.js, etc.). Ces
+  informations aident un attaquant à cibler des vulnérabilités spécifiques à
+  cette version. Parité OWASP ZAP 10021/10037.
+
+detection:
+  keywords:
+    - x-powered-by
+    - technology-detection
+    - server-leaks
+
+validation:
+  method: passive
+  description: >
+    Vérification passive de la présence de l'en-tête X-Powered-By dans la
+    réponse du serveur.
+
+evidence_expected:
+  - "En-tête X-Powered-By avec sa valeur"
+
+recommendation: >
+  Supprimer l'en-tête X-Powered-By, ou l'obfusquer pour ne pas divulguer la
+  version exacte des technologies utilisées.
+
+references:
+  - "https://owasp.org/www-project-secure-headers/"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.15

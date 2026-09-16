@@ -1,0 +1,1 @@
+{"template-id": "phpinfo-exposed", "info": {"name": "phpinfo() Page Exposed", "description": "A phpinfo() page at /info.php leaks PHP configuration details.", "severity": "medium", "tags": ["exposure", "config-file", "phpinfo"]}, "type": "http", "host": "http://example.test", "matched-at": "http://example.test/info.php", "timestamp": "2026-09-11T10:01:20Z"}

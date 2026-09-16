@@ -1,0 +1,42 @@
+id: RULE-SRI-001
+name: "Sub Resource Integrity Attribute Missing"
+category: security_misconfiguration
+severity: medium
+version: "1.0.0"
+created_at: "2026-09-02"
+updated_at: "2026-09-02"
+
+description: >
+  Des balises <script> ou <link> servies par un domaine tiers ne portent pas
+  l'attribut 'integrity' (SRI). En cas de compromission du serveur tiers, un
+  contenu malveillant pourrait être chargé sans que le navigateur ne s'en
+  aperçoive. C'est l'alerte ZAP 90003.
+
+detection:
+  keywords:
+    - sub resource integrity
+    - integrity
+    - script
+    - third-party
+
+validation:
+  method: passive
+  description: >
+    Analyse passive du HTML crawlée : constat pour toute ressource tierce
+    (script ou lien) sans attribut integrity. Aucune requête supplémentaire.
+
+evidence_expected:
+  - "Balise tierce sans attribut integrity"
+
+recommendation: >
+  Ajouter l'attribut integrity (SRI) avec le hash correct sur toute ressource
+  tierce chargée dans les pages.
+
+references:
+  - "https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity"
+
+checks: []
+
+confidence:
+  base_score: 0.6
+  multi_source_bonus: 0.1

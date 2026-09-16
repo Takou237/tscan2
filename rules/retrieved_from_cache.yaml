@@ -1,0 +1,41 @@
+id: RULE-RETRIEVED-CACHE-001
+name: "Retrieved from Cache"
+category: security_misconfiguration
+severity: info
+version: "1.0.0"
+created_at: "2026-09-11"
+updated_at: "2026-09-11"
+
+description: >
+  La réponse porte la marque d'une mise en cache côté serveur ou CDN
+  (Age, CF-Cache-Status, X-Cache, Via) : du contenu potentiellement sensible
+  peut avoir été servi depuis un cache intermédiaire. Parité OWASP ZAP.
+
+detection:
+  keywords:
+    - retrieved from cache
+    - cache hit
+    - cache
+
+validation:
+  method: passive
+  description: >
+    Analyse passive des en-têtes de cache des réponses : constat lorsqu'un
+    indicateur de cache (Age, CF-Cache-Status: HIT, X-Cache, Via) est présent.
+    Aucune requête supplémentaire.
+
+evidence_expected:
+  - "En-tête de mise en cache (Age, CF-Cache-Status, X-Cache, Via)"
+
+recommendation: >
+    Vérifier que le contenu sensible n'est pas mis en cache, et purger le
+    cache en cas de fuite effectivement constatée.
+
+references:
+  - "https://cwe.mitre.org/data/definitions/525.html"
+
+checks: []
+
+confidence:
+  base_score: 0.4
+  multi_source_bonus: 0.1
