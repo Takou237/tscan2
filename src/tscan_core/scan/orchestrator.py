@@ -55,7 +55,12 @@ from tscan_core.recon.fingerprint import TechnologyMatch
 from tscan_core.recon.tls import TlsInfo, TlsProbeError, probe_tls
 from tscan_core.rule_engine.loader import load_rules
 from tscan_core.rule_engine.schema import RuleDefinition
-from tscan_core.scan.checks import CheckResult, evaluate_rule_checks, validate_rule_checks
+from tscan_core.scan.checks import (
+    CheckResult,
+    evaluate_rule_checks,
+    new_calibration_token,
+    validate_rule_checks,
+)
 from tscan_core.scan.config import ScanConfig, ScanConfigError
 from tscan_core.scan.confirmation import reverify_active_findings
 from tscan_core.scan.detections import FindingInfo, check_deadline, run_active_detections
@@ -505,8 +510,35 @@ def _run_declarative_checks(
     pour ne pas refaire de requêtes redondantes.
     """
     pages: dict[str, RootResponse] = dict(crawled_pages) if crawled_pages else {}
+    calibration: RootResponse | None = None
+    calibration_token: str | None = None
     if "bac" in config.allowed_tests:
         base = config.target.rstrip("/")
+
+        # Sentinelle anti soft-404 (contrôle négatif) : AVANT les sondes de
+        # chemins, une requête GET vers un chemin inexistant aléatoire
+        # (ex : /tscan-calib-k3v9x2m4qp1z) sert de référence du « bruit de
+        # fond » du serveur. Une cible qui fabrique des soft-404 (200 générique
+        # pour n'importe quel chemin) rendra ses 200 indiscernables du
+        # contrôle : les constats d'exposition présumée ne seront pas produits
+        # (un 200 ne prouve plus rien). Une seule requête pour tout le scan.
+        calibration_token = new_calibration_token()
+        calibration_url = f"{base}/tscan-calib-{calibration_token}"
+        try:
+            calibration = fetch_url(client, calibration_url)
+            notify(
+                on_event,
+                "checks",
+                f"GET {calibration_url} -> {calibration.status_code} (sentinelle)",
+                None,
+            )
+        except ReconError as exc:
+            # Sentinelle en échec réseau : la calibration est simplement
+            # indisponible (les sondes de chemins restent évaluées sur leur
+            # statut seul, comme avant). Tracé, jamais fatal.
+            observations.setdefault("sondes", {})["sentinelle"] = str(exc)
+            notify(on_event, "checks", f"GET {calibration_url} -> échec ({exc})", None)
+
         for rule in rules:
             for raw in rule.checks:
                 if raw.get("type") != "path_status":
@@ -525,6 +557,13 @@ def _run_declarative_checks(
                 except ReconError as exc:
                     observations.setdefault("sondes", {})[path] = str(exc)
                     notify(on_event, "checks", f"GET {abs_url} -> échec ({exc})", None)
+        if calibration is not None:
+            observations["sentinelle"] = {
+                "url": calibration_url,
+                "status_code": calibration.status_code,
+                "token": calibration_token,
+                "generic": calibration.status_code in (200, 204),
+            }
 
     findings: list[FindingInfo] = []
     allowed = config.allowed_tests
@@ -540,7 +579,7 @@ def _run_declarative_checks(
         if not eligible:
             continue
 
-        results = evaluate_rule_checks(rule, root, pages)
+        results = evaluate_rule_checks(rule, root, pages, calibration, calibration_token)
         for result in results:
             findings.append(
                 _persist_finding(

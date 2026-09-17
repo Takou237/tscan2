@@ -1,0 +1,79 @@
+# Signatures de reconnaissance des faux positifs (RF-12, validation croisée).
+#
+# Un constat automatique peut être trompé par des réponses HTTP légitimes
+# qui ressemblent à une vulnérabilité. Deux familles de pièges :
+#
+#   1. Une ressource sensible PROTÉGÉE par une redirection vers une page de
+#      connexion (WordPress répond 302 /wp-admin/ -> /wp-login.php ; si le
+#      scanner suit la redirection et ne regarde que le statut final 200,
+#      il conclut à tort « panneau d'administration exposé » — faux positif
+#      observé sur le terrain et corrigé en semaine 12).
+#   2. Une cible qui fabrique des « soft-404 » : un 200 avec une page
+#      générique pour N'IMPORTE quel chemin. Le check `path_status` y
+#      verrait des ressources exposées partout — la sentinelle
+#      (chemin-sentinelle aléatoire, `tscan_core.scan.checks`) compare la
+#      sonde à ce contrôle négatif ; les marqueurs de la catégorie
+#      `waf_pages` complètent la reconnaissance des pages de blocage.
+#
+# Ce fichier versionné centralise ces signatures, à la manière des règles
+# du dossier rules/ et des autres tables du dossier knowledge/ : les listes
+# ci-dessous s'étendent sans toucher au code (checks.py les consulte via
+# `tscan_core.knowledge_base.fp_signatures`).
+#
+# Règles du format :
+#   * `id`           : identifiant machine de la catégorie (unique).
+#   * `label`        : nom affichable.
+#   * `description`  : à quoi sert la catégorie (facultatif).
+#   * `path_markers` : fragments (en minuscules) recherchés en sous-chaîne
+#     du chemin de la page de destination. Deux consignes de rédaction :
+#       - ne pas lister la ressource testée elle-même (« admin » est
+#         interdit ici : /admin/ est la ressource à sonder, pas la page
+#         qui la protège) ;
+#       - éviter les collisions (« auth » seul attraperait /author/john-doe,
+#         archive publique d'un blog : on retient « authent » et « oauth »).
+#
+# Catégories consommées par le moteur :
+#   * `auth_pages` : check déclaratif `path_status` (RF-20) et sa
+#     re-vérification (RF-23) via `is_path_exposed` ;
+#   * `waf_pages`  : documentée pour la corrélation et l'analyse des
+#     constats « exposé » douteux (consommateur moteur à venir).
+
+- id: auth_pages
+  label: "Pages d'authentification"
+  description: >-
+    Une redirection (301/302) vers l'une de ces pages, ou un 200 atteint
+    après une telle redirection, signale une ressource protégée par un
+    contrôle d'accès — pas une ressource exposée.
+  path_markers:
+    - login        # wp-login.php, /login, login.aspx, user/login...
+    - logon        # formulaires d'authentification Windows / .NET
+    - log-in
+    - signin
+    - sign-in
+    - authent      # authentification, authenticate (sans attraper /author/)
+    - oauth
+    - session
+    - connexion    # pages de connexion francophones (/connexion, fr/connexion)
+    - userlogin    # alias applicatifs (userlogin, user_login sans tiret)
+    - memberlogin  # espaces membres
+    - adminlogin   # /admin-login (la ressource /admin/ reste sonable)
+    - wp-login.php # verbatim WordPress (couvre wp-login.php?redirect_to=...)
+    - user/login   # Drupal (route canonique)
+    - accounts/login  # Django (allauth)
+    - account/login   # Django (auth par défaut)
+
+- id: waf_pages
+  label: "Pages de blocage WAF / anti-bot"
+  description: >-
+    Pages servies en 200 par un pare-feu applicatif ou un filtrage anti-bot
+    (challenge JavaScript, « Just a moment… », captcha) : le statut 200
+    n'y indique JAMAIS une ressource exposée. À distinguer de la réponse
+    sentinelle : ces pages ont un contenu propre au produit de filtrage.
+  path_markers:
+    - challenge        # pages de challenge génériques
+    - captcha          # captchas de vérification
+    - just-a-moment    # Cloudflare
+    - checking-your-browser  # Cloudflare (variante ancienne)
+    - attn             # Akamai (page d'attention)
+    - denied           #« accès refusé » générique (deny, access denied)
+    - accessdenied     # Akamai/F5 (variantes sans séparateur)

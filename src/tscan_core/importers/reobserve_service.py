@@ -49,6 +49,7 @@ from tscan_core.models import (
     ScanType,
 )
 from tscan_core.recon.client import create_http_client, fetch_url
+from tscan_core.scan.blocking import detect_target_blocking
 from tscan_core.scan.config import ScanConfig, validate_target
 from tscan_core.scan.orchestrator import ENGINE_SOURCE, run_recon_scan
 from tscan_core.status import AUTOMATIC_ACTOR, change_status
@@ -91,6 +92,16 @@ class ReobserveOutcome:
     not_reproducible: int = 0
     # Constats importés placés en potentiel faux positif (URL + titre).
     flagged: list[dict] = field(default_factory=list)
+    # La cible a refusé la ré-observation (racine en 401/403/429 ou crawl
+    # quasi vide) : les comptes ci-dessus sont sous-estimés (corroboration
+    # dégradée) et doivent être lus avec prudence. Les interfaces affichent
+    # alors un avertissement explicite.
+    blocked: bool = False
+    blocked_reason: str = ""
+    # Statut HTTP de la racine et nombre de pages crawlées par la
+    # ré-observation (remontés aux interfaces pour le diagnostic).
+    root_status_code: int | None = None
+    pages_crawled: int | None = None
 
 
 def reobserve_imported_scan(
@@ -146,6 +157,19 @@ def reobserve_imported_scan(
     )
     active_scan_id = outcome.scan_id
 
+    # Détection d'un blocage de la cible (anti-bot/WAF) : une racine refusée
+    # (401/403/429) ou une sonde racine en échec signifie que la ré-observation
+    # est passée aveugle. Les comptes de corroboration restent valides en eux-
+    # mêmes, mais ils sous-estiment la réalité (peu de constats produits pour
+    # comparer) : on le signale explicitement aux interfaces au lieu de
+    # présenter un bilan trompeusement « normal ».
+    blocked, block_reasons = detect_target_blocking(outcome.recon_observations)
+    blocked_reason = "; ".join(block_reasons)
+    root_status = outcome.recon_observations.get("status_code")
+    pages_crawled = (outcome.recon_observations.get("crawl_stats") or {}).get(
+        "pages_found"
+    )
+
     # Constats produits par le scan actif de ré-observation (source tscan_engine),
     # enrichis de ceux des scans actifs Tscan déjà présents en base sur la même
     # cible : un scan complet lancé au préalable corrobore les constats importés
@@ -179,9 +203,28 @@ def reobserve_imported_scan(
         import_scan_id=import_scan_id,
         active_scan_id=active_scan_id,
         total=len(imported),
+        blocked=blocked,
+        blocked_reason=blocked_reason,
+        root_status_code=root_status if isinstance(root_status, int) else None,
+        pages_crawled=pages_crawled if isinstance(pages_crawled, int) else None,
     )
 
     for finding in imported:
+        if blocked:
+            # La cible bloque la ré-observation : ce contexte est porté par
+            # chaque constat non corroboré pour que l'analyste voie en base
+            # pourquoi le bilan est incomplet, sans ouvrir le recon_json.
+            _add_note(
+                session,
+                finding,
+                (
+                    "Ré-observation dégradée : la cible a refusé le scan actif "
+                    f"de ré-observation ({blocked_reason}). La corroboration "
+                    "s'appuie surtout sur les scans actifs antérieurs — le "
+                    "bilan est sous-estimé, à relire plus tard ou depuis une "
+                    "autre adresse IP."
+                ),
+            )
         if finding.id in corroborated_ids:
             _reward_reproduced(session, finding)
             result.reproduced += 1
@@ -434,6 +477,27 @@ def targeted_reobserve(session: Session, finding: Finding, client) -> bool:
     # peut plus être observé → contradiction (faux positif probable).
     if page.status_code in (404, 410):
         return True
+
+    # Statut 401/403/429 : la ressource a répondu, mais le serveur refuse la
+    # requête (contrôle d'accès, filtrage anti-bot/WAF, rate limiting). Ce
+    # n'est ni une preuve d'accessibilité, ni une preuve de disparition : la
+    # sonde ne peut ni corroborer ni contredire le constat (le fait décisif
+    # reste inobservable depuis cette adresse IP). Constat laissé tel quel,
+    # avec une note explicite pour que l'analyste sache que la cible bloque
+    # la sonde — le « -> 403 » ne doit pas être lu comme « accessible ».
+    if page.status_code in (401, 403, 429):
+        _add_note(
+            session,
+            finding,
+            (
+                "Ré-observation ciblée bloquée : la ressource a répondu "
+                f"{page.status_code} (refus : contrôle d'accès, filtrage "
+                "anti-bot/WAF ou rate limiting) sur "
+                f"{url}. Le fait décisif n'est pas observable : le constat "
+                "n'est ni corroboré ni contredit — revue analytique requise."
+            ),
+        )
+        return False
 
     _add_note(
         session,

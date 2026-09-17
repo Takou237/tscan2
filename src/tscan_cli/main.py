@@ -27,6 +27,7 @@ from tscan_core.recon.client import ReconError
 from tscan_core.reporting import SEVERITY_ORDER, generate_report
 from tscan_core.reporting.render_html import render_html
 from tscan_core.reporting.render_markdown import render_markdown
+from tscan_core.scan.blocking import detect_target_blocking
 from tscan_core.scan.config import ScanConfig, ScanConfigError
 from tscan_core.scan.orchestrator import run_recon_scan
 from tscan_core.status import correct_status_manually
@@ -109,6 +110,14 @@ def import_command(
             f"{outcome.potential_false_positives} potentiel(s) faux positif(s), "
             f"{outcome.not_reproducible} non concluant(s) (revue analytique requise, RF-12)."
         )
+        if outcome.blocked:
+            typer.echo(
+                "⚠ AVERTISSEMENT : la cible a refusé la ré-observation active "
+                f"({outcome.blocked_reason}). Le bilan est sous-estimé : peu de "
+                "constats ont pu être produits pour comparer — réessayez plus "
+                "tard ou depuis une autre adresse IP (ES-05).",
+                err=True,
+            )
 
 
 @app.command("correlate")
@@ -182,6 +191,21 @@ def list_command(
                 f"#{f.id:<4} [{f.status.value:<25}] score={score:<5} "
                 f"{f.severity:<8} {f.category:<25} {f.title}"
             )
+
+
+def _warn_if_target_blocked(outcome) -> None:
+    """Avertit quand la cible a refusé le scan (racine 401/403/429, échec de
+    la sonde racine) : le bilan est incomplet, il ne faut pas le lire comme
+    un site sain (recon_json = source de vérité du diagnostic)."""
+    blocked, reasons = detect_target_blocking(outcome.recon_observations)
+    if blocked:
+        typer.echo(
+            "⚠ AVERTISSEMENT : la cible semble bloquer le scanner ("
+            + "; ".join(reasons)
+            + "). Le bilan ci-dessus est incomplet — réessayez plus tard ou "
+            "depuis une autre adresse IP (ES-05).",
+            err=True,
+        )
 
 
 @app.command("show")
@@ -370,6 +394,7 @@ def scan_command(
             "faux positif(s). Aucun constat n'est automatiquement Confirmé : "
             "la confirmation finale relève de la revue de l'analyste (RF-12)."
         )
+    _warn_if_target_blocked(outcome)
 
     if outcome.technologies:
         typer.echo("Technologies détectées :")

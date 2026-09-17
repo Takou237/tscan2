@@ -43,7 +43,7 @@ from tscan_core.recon.fingerprint import load_technologies
 from tscan_core.recon.tls import TlsProbeError, probe_tls
 from tscan_core.rule_engine.loader import load_rules
 from tscan_core.rule_engine.schema import RuleDefinition
-from tscan_core.scan.checks import EXPOSED_STATUSES, evaluate_rule_checks
+from tscan_core.scan.checks import evaluate_rule_checks, is_path_exposed
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import (
     check_deadline,
@@ -258,7 +258,26 @@ def _one(
         if not isinstance(path, str) or not path.startswith("/"):
             return False
         page = _page_path(config, client, cache, path, on_event)
-        return page.status_code in EXPOSED_STATUSES
+        calibration, token = _calibration_path(config, client, cache, on_event)
+        # Même sémantique qu'à la détection (checks.py) : une redirection
+        # vers une page de login (ex : /wp-admin/ -> /wp-login.php) est une
+        # protection, pas une reproduction de l'exposition ; un 200
+        # indiscernable de la sentinelle anti soft-404 ne prouve rien.
+        if is_path_exposed(page, calibration, token):
+            return True
+        if calibration is not None:
+            session.add(
+                Evidence(
+                    finding_id=finding.id,
+                    evidence_type=EvidenceType.NOTE,
+                    content_text=(
+                        "Re-vérification : le 200 de la ressource est indiscernable "
+                        "de la sentinelle anti soft-404 (page générique de la cible) : "
+                        "le fait décisif n'est pas démontrable — revue analytique requise."
+                    ),
+                )
+            )
+        return False
 
     if finding.rule_id == "RULE-VULNCOMP-001":
         return _component_reproduced(session, finding, config, client, cache)
@@ -719,6 +738,31 @@ def _page_path(config: ScanConfig, client, cache: dict, path: str, on_event=None
         cache[key] = fetch_url(client, url, **_REVERIFY_KWARGS)
         notify(on_event, "confirm", f"GET {url} -> {cache[key].status_code}", None)
     return cache[key]
+
+
+def _calibration_path(
+    config: ScanConfig, client, cache: dict, on_event=None
+) -> tuple[RootResponse | None, str | None]:
+    """Sentinelle anti soft-404 de la re-vérification (une seule par scan).
+
+    Même contrôle négatif qu'à la détection (orchestrator.py) : un chemin
+    inexistant aléatoire sert de référence du comportement générique du
+    serveur. Un échec réseau n'est pas fatal : la calibration vaut None et
+    l'évaluation retombe sur le statut seul.
+    """
+    if "calibration" not in cache:
+        from tscan_core.scan.checks import new_calibration_token
+
+        token = new_calibration_token()
+        url = f"{config.target.rstrip('/')}/tscan-calib-{token}"
+        try:
+            cache["calibration"] = fetch_url(client, url, **_REVERIFY_KWARGS)
+            cache["calibration_token"] = token
+            notify(on_event, "confirm", f"GET {url} -> {cache['calibration'].status_code} (sentinelle)", None)
+        except ReconError:
+            cache["calibration"] = None
+            cache["calibration_token"] = None
+    return cache["calibration"], cache["calibration_token"]
 
 
 def _match_key(url: str | None) -> str:

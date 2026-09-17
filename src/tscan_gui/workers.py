@@ -26,6 +26,7 @@ from PySide6.QtCore import QThread, Signal
 
 from tscan_core import db
 from tscan_core.db import get_engine, init_db
+from tscan_core.scan.blocking import detect_target_blocking
 
 
 @dataclass
@@ -115,6 +116,10 @@ def import_task(
                 "potential_false_positives": outcome.potential_false_positives,
                 "not_reproducible": outcome.not_reproducible,
                 "flagged": outcome.flagged,
+                "blocked": outcome.blocked,
+                "blocked_reason": outcome.blocked_reason,
+                "root_status_code": outcome.root_status_code,
+                "pages_crawled": outcome.pages_crawled,
             }
         return payload
 
@@ -189,9 +194,23 @@ def scan_task(scan_kwargs: dict) -> tuple[Callable[[Any], dict], Any]:
             "target": outcome.target,
             "findings": len(outcome.findings),
             "interrupted": outcome.interrupted,
+            "blocked": _target_blocked(outcome.recon_observations),
         }
 
     return run, interrupt
+
+
+def _target_blocked(recon: dict | None) -> dict | None:
+    """Détecte qu'une cible a refusé le scan (racine 401/403/429, échec de la
+    sonde racine) et retourne le détail de l'avertissement à afficher — None
+    si le scan s'est déroulé normalement. S'appuie sur l'heuristique partagée
+    `scan.blocking` (même source de vérité que la CLI et la ré-observation)."""
+    blocked, reasons = detect_target_blocking(recon)
+    if not blocked:
+        return None
+    return {"reasons": reasons}
+
+
 
 
 def report_task(

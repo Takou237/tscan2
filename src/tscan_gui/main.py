@@ -227,7 +227,19 @@ class MainWindow(QMainWindow):
         self.stop_action.setEnabled(False)
         self._current_interrupt = None
         if result.ok:
-            QMessageBox.information(self, "Tscan", f"{success}\n{result.message}")
+            message = f"{success}\n{result.message}"
+            # Scan actif refusé par la cible (anti-bot/WAF) : le bilan est
+            # incomplet, on prévient l'analyste au lieu d'afficher un résumé
+            # trompeusement normal.
+            detail = result.detail if isinstance(result.detail, dict) else None
+            if detail and detail.get("blocked"):
+                reasons = "; ".join(detail["blocked"].get("reasons", []))
+                message += (
+                    f"\n\n⚠ AVERTISSEMENT : la cible semble bloquer le scanner "
+                    f"({reasons}). Le bilan est incomplet — réessayez plus tard "
+                    "ou depuis une autre adresse IP."
+                )
+            QMessageBox.information(self, "Tscan", message)
             self.refresh()
         else:
             self.progress_panel.notify_failure(result.message)
@@ -259,6 +271,13 @@ class MainWindow(QMainWindow):
                     f"{rex_r['potential_false_positives']} potentiel(s) faux positif(s), "
                     f"{rex_r['not_reproducible']} non concluant(s) (revue analytique, RF-12)."
                 )
+                if rex_r.get("blocked"):
+                    message += (
+                        f"\n\n⚠ AVERTISSEMENT : la cible a refusé la ré-observation "
+                        f"active ({rex_r.get('blocked_reason')}). Le bilan est "
+                        "sous-estimé — réessayez plus tard ou depuis une autre "
+                        "adresse IP."
+                    )
             QMessageBox.information(self, "Tscan", message)
             self.refresh()
 

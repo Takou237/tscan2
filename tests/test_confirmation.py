@@ -200,6 +200,45 @@ def test_confirmation_is_idempotent_on_second_scan(lab_server) -> None:
         assert all(f.status == FindingStatus.PROBABLE for f in findings)
 
 
+def test_confirmation_bac_login_redirect_not_reproduced(lab_server) -> None:
+    """Cohérence détection/re-vérification BAC : /wp-admin/ protégé par une
+    302 vers wp-login.php ne doit être ni compté exposé (détection), ni
+    « reproduit » (re-vérification). Le 302->login est un 200 de la page de
+    login (redirections suivies) : is_path_exposed le reconnaît comme une
+    protection — le constat ne part pas en faux positif."""
+    engine = get_engine(":memory:")
+    init_db(engine)
+
+    def wp_login_redirect(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/wp-admin/":
+            return httpx.Response(
+                302,
+                headers={
+                    "Location": f"{lab_server.base_url}/wp-login.php?redirect_to={request.url}"
+                },
+            )
+        if request.url.path == "/wp-login.php":
+            return httpx.Response(200, text="<html><body>Connexion</body></html>")
+        if request.url.path.startswith("/config/") or request.url.path == "/admin/":
+            return httpx.Response(404, text="")
+        return httpx.Response(200, text="<html><body>ok</body></html>")
+
+    client = httpx.Client(transport=httpx.MockTransport(wp_login_redirect), follow_redirects=True)
+    try:
+        with get_session(engine) as session:
+            run_recon_scan(
+                session,
+                _config(lab_server, allowed_tests=frozenset({"recon", "bac"})),
+                http_client=client,
+            )
+
+            bac = session.query(Finding).filter_by(rule_id="RULE-BAC-001").all()
+            # Aucun constat BAC : 302 vers wp-login.php = protection, pas exposition.
+            assert bac == []
+    finally:
+        client.close()
+
+
 def test_confirmation_xss_contradiction_flags_potential_false_positive(lab_server) -> None:
     """Ré-observation précise d'une détection en CODE (XSS) : la charge qui a
     produit le constat (réflexion du nonce) ne se reproduit plus lors de la

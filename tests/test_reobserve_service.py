@@ -58,6 +58,80 @@ def _imported_scan(session, target: str = "example.test"):
     return scan
 
 
+class _BlockedSite(_Site):
+    """Site qui refuse tout le scan actif (anti-bot/WAF) : la racine et le
+    crawl répondent 403, comme otakutique.com lors de la session du 16/09.
+    Simule une cible qui ne bloque pas au premier contact mais après
+    plusieurs requêtes : la racine de la ré-observation est refusée."""
+
+    def __init__(self, root_status: int = 403) -> None:
+        super().__init__()
+        self.root_status = root_status
+        self.requests_on_root = 0
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        # La racine est refusée dès la ré-observation (le scan de la
+        # session réelle avait une racine 200 au 1er scan, 403 au 2e).
+        if request.url.path == "/":
+            return httpx.Response(self.root_status, text="<html><body>Forbidden</body></html>")
+        return super().__call__(request)
+
+
+def test_reobserve_detects_blocked_target(lab_server) -> None:
+    """Cible qui refuse la ré-observation (racine 403, crawl quasi vide) :
+    le bilan est marqué `blocked=True` avec une raison explicite, et chaque
+    constat importé porte une note signalant la corroboration dégradée."""
+    engine = get_engine(":memory:")
+    init_db(engine)
+
+    client = httpx.Client(transport=httpx.MockTransport(_BlockedSite(root_status=403)), follow_redirects=True)
+    try:
+        with get_session(engine) as session:
+            scanned = _imported_scan(session, target="http://example.test")
+            outcome = reobserve_imported_scan(
+                session,
+                scanned.id,
+                target="http://example.test",
+                http_client=client,
+            )
+
+            # Blocage détecté et expliqué.
+            assert outcome.blocked is True
+            assert "403" in outcome.blocked_reason
+            assert outcome.root_status_code == 403
+
+            # Chaque constat importé porte la note de corroboration dégradée.
+            findings = session.query(Finding).filter_by(scan_id=scanned.id).all()
+            assert findings
+            for f in findings:
+                notes = [e.content_text for e in f.evidences]
+                assert any("Ré-observation dégradée" in n for n in notes)
+    finally:
+        client.close()
+
+
+def test_reobserve_not_blocked_on_healthy_target(lab_server) -> None:
+    """Contre-exemple : une cible qui répond normalement (racine 200, crawl
+    vivant) n'est pas marquée bloquée."""
+    engine = get_engine(":memory:")
+    init_db(engine)
+
+    client = httpx.Client(transport=httpx.MockTransport(_Site()), follow_redirects=True)
+    try:
+        with get_session(engine) as session:
+            scanned = _imported_scan(session, target="http://example.test")
+            outcome = reobserve_imported_scan(
+                session,
+                scanned.id,
+                target="http://example.test",
+                http_client=client,
+            )
+            assert outcome.blocked is False
+            assert outcome.blocked_reason == ""
+    finally:
+        client.close()
+
+
 def test_reobserve_requires_an_import_scan(lab_server) -> None:
     engine = get_engine(":memory:")
     init_db(engine)
@@ -127,6 +201,41 @@ def test_reobserve_does_not_flag_when_resource_still_present(lab_server) -> None
             # Pas de faux positif : ressource toujours présente.
             assert admin.status != FindingStatus.POTENTIAL_FALSE_POSITIVE
             assert outcome.potential_false_positives == 0
+    finally:
+        client.close()
+
+
+def test_reobserve_does_not_flag_when_resource_refuses_request(lab_server) -> None:
+    """Endpoint qui refuse la requête (403, filtrage anti-bot/WAF ou contrôle
+    d'accès) et non corroboré : la sonde ne peut ni corroborer ni contredire
+    le constat → pas de faux positif, note explicite distinguant le refus
+    (« bloquée ») de l'accessibilité réelle (« toujours accessible »)."""
+    engine = get_engine(":memory:")
+    init_db(engine)
+
+    client = httpx.Client(transport=httpx.MockTransport(_Site(admin_status=403)), follow_redirects=True)
+    try:
+        with get_session(engine) as session:
+            scanned = _imported_scan(session, target="http://example.test")
+            outcome = reobserve_imported_scan(
+                session,
+                scanned.id,
+                target="http://example.test",
+                http_client=client,
+            )
+            findings = session.query(Finding).filter_by(scan_id=scanned.id).all()
+            admin = next(f for f in findings if f.category == "broken_access_control")
+            # Un refus 403 n'est ni une preuve de disparition (404/410) ni une
+            # preuve d'accessibilité (200) : le constat reste non conclu.
+            assert admin.status != FindingStatus.POTENTIAL_FALSE_POSITIVE
+            assert outcome.potential_false_positives == 0
+            notes = [e.content_text for e in admin.evidences if e.evidence_type.value == "note"]
+            assert any(
+                "Ré-observation ciblée bloquée" in n and "403" in n for n in notes
+            )
+            # Le message trompeur « toujours accessible » ne doit plus apparaître
+            # pour un refus : c'est précisément la correction demandée.
+            assert not any("toujours accessible" in n for n in notes)
     finally:
         client.close()
 
