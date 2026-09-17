@@ -163,7 +163,7 @@ avancement réel / planning. Le README reflète l'état réel du dépôt à chaq
 
 ### 6.2 Assurance qualité
 
-- **301 tests automatisés** (pytest), tous verts ;
+- **322 tests automatisés** (pytest), tous verts ;
 - **ruff** (linting) propre sur `src/`, `tests/` et `rules/` ;
 - **1 test automatisé minimum par module critique** ;
 - audit des dépendances (`pip-audit` via `scripts/audit_deps.py`, ES-12) ;
@@ -191,8 +191,8 @@ src/
   tscan_cli/        Interface en ligne de commande (Typer)
   tscan_gui/        Application desktop (PySide6)
 rules/              54 règles de détection versionnées (YAML)
-knowledge/          Technologies, alias CPE, référence CWE
-tests/              301 tests pytest + labo local (lab_server.py) + fixtures réelles
+knowledge/          Technologies, alias CPE, référence CWE, signatures de faux positifs
+tests/              322 tests pytest + labo local (lab_server.py) + fixtures réelles
 docs/               Cahier des charges (PDF), checklist projet, rapport de stage
 ```
 
@@ -468,8 +468,9 @@ des ressources que le moteur Tscan ne crawle volontairement pas (fichiers images
 documenté au chapitre 10. Ces limites sont méthodologiquement significatives : **les deux
 outils sont sujets au même blocage**, ce qui relativise l'écart constaté.
 
-**Indicateurs qualité** : 315 tests verts, ruff propre, un test minimum par module critique,
-migration de données vérifiée sur la base réelle.
+**Indicateurs qualité** : 322 tests verts, ruff propre, un test minimum par module critique,
+migration de données vérifiée sur la base réelle. L'effet des correctifs anti-faux-positifs
+de la semaine 12 est mesuré en 9.4.
 
 ### 9.3 Comparaison ZAP vs Tscan sur le cas d'étude
 
@@ -483,6 +484,26 @@ migration de données vérifiée sur la base réelle.
 | Sub Resource Integrity Missing, Cross-Domain JS | ✅ (après correctif Brotli) |
 | Absence de jetons Anti-CSRF | ✅ (formulaires POST analysés) |
 | CSP Not Set sur image PNG, charset, XSS attribut, Sensitive Info in URL | ⚠️ partiel / non (hors périmètre de crawl ou blocage WAF) |
+
+### 9.4 Effet des correctifs anti-faux-positifs (semaine 12)
+
+Le lot de fiabilisation décrit en 8.9 (verdict sur la destination des redirections,
+sentinelle anti soft-404, signatures déclaratives) a été mesuré sur la cible d'étude en
+conditions réelles (17/09/2026, scan actif #5, autorisation inchangée, même adresse IP) :
+
+| Observation | Campagnes avant correctifs | Scan #5 (après correctifs) |
+|---|---|---|
+| Constat « Panneau d'administration accessible sans authentification » | produit à chaque campagne (302 /wp-admin/ → wp-login.php suivie, 200 final) | **0** |
+| Sentinelle anti soft-404 | absente | exécutée (1 requête), tracée dans `recon_json` |
+| Avertissement « cible bloque le scanner » | absent (bilan présenté comme normal) | affiché (racine 403, crawl quasi vide) |
+| Potentiels faux positifs automatiques | au moins 1 (panneau admin) | 0 |
+
+**Analyse** : la cible restant bloquée (racine 403, crawl quasi vide — cf. 10.4), le scan #5
+ne produit que des constats passifs sur la racine (10 constats, re-vérifiés : 3 reproduits,
+0 contredit). La mesure de corroboration reste celle du tableau 9.2 ; l'apport démontré ici
+est la **disparition du faux positif récurrent** et la transparence du bilan face au
+blocage. La mesure complète (avec crawl et corroboration ZAP) sera refaite après levée du
+filtrage anti-bot.
 
 ---
 
@@ -569,7 +590,14 @@ des charges) :
 6. **Tests manuels GUI UC1→UC5** : à exécuter sur poste avec affichage ;
 7. **Re-vérification limitée** : elle ne re-vérifie pas les alertes ZAP actives dont la
    logique de détection n'est pas implémentée côté Tscan (ex. injection dans un
-   formulaire soumis).
+   formulaire soumis) ;
+8. **Sentinelle et abstention** : le contrôle négatif anti soft-404 peut conduire à
+   **s'abstenir** sur une exposition réelle si la ressource ressemble fortement à la page
+   générique de la cible — compromis assumé (RF-12) : l'incertitude produit une note pour
+   revue analytique, jamais un constat ni une classification silencieuse ;
+9. **Corroboration « historique »** : la ré-observation d'un lot importé compte un scan
+   Tscan antérieur sur la même cible comme preuve de recouvrement — corroboration différée,
+   pas un rejeu en temps réel de chaque alerte.
 
 ---
 
@@ -583,7 +611,16 @@ des charges) :
 - **Base de connaissances** : enrichissement automatique des recommandations via CWE et
   le catalogue KEV (priorisation des vulnérabilités exploitées activement) ;
 - **CI/CD** : pipeline GitHub Actions (pytest + ruff à chaque push) ;
-- **Distribution** : publication des règles en paquet versionné indépendant du code.
+- **Distribution** : publication des règles en paquet versionné indépendant du code ;
+- **Contrôle négatif généralisé** : étendre la sentinelle anti soft-404 aux familles de
+  détection actives (fichiers sensibles, listing de répertoire, injections) dont les
+  verdicts « 200 » restent exposés au même piège ;
+- **Mesure précision / rappel** : corpus étiqueté (laboratoire + sites sains) pour chiffrer
+  la précision du moteur avant/après correctifs et détecter objectivement les régressions ;
+- **Statistiques de faux positifs par règle** : exploiter les verdicts d'analyste
+  (`StatusHistory`, RF-12) pour produire un taux FP par règle et prioriser les
+  améliorations — sans auto-ajustement automatique des scores, qui ferait dériver le
+  moteur.
 
 ---
 
@@ -593,7 +630,7 @@ des charges) :
 
 **Techniques** : architecture logicielle (découplage cœur/CLI/GUI, modèle pivot), sécurité
 web appliquée (OWASP Top 10 en pratique, charges bénignes, non-destructivité), qualité
-logicielle (301 tests, linting, migrations), Python avancé (SQLAlchemy, httpx, PySide6,
+logicielle (322 tests, linting, migrations), Python avancé (SQLAlchemy, httpx, PySide6,
 Typer), diagnostic réseau/TLS (DNS, TCP, TLS, encodages de transport).
 
 **Méthodologiques** : gestion de projet MVP, documentation vivante (checklist + README
@@ -625,7 +662,7 @@ d'analyse, de corrélation et de validation de vulnérabilités web : import de 
 scanners, 54 règles YAML versionnées, 27 familles de détection non destructives, scoring
 explicable, ré-observation avec corroboration mesurée (**76,9 %** sur le cas d'étude),
 reporting HTML/Markdown, CLI complète et application desktop — le tout adossé à une
-checklist de sécurité transverse (ES-01→ES-12) et à **301 tests automatisés**.
+checklist de sécurité transverse (ES-01→ES-12) et à **322 tests automatisés**.
 
 Au-delà de l'outil, le stage démontre qu'une **démarche d'ingénierie rigoureuse** — cahier
 des charges, MVP incrémental, validation expérimentale, limites assumées — peut produire,
