@@ -7,7 +7,7 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 ## Suivi réel de l'avancement (au 21/08/2026)
 
 - S1–S2 : terminées et validées.
-- S3 : squelette technique opérationnel (venv, pyproject, ruff, pytest, modèles, base SQLite, CLI Typer, README). Dépôt Git, `.gitignore` et convention de commit **en attente de décision** (aucun commit avant fin du stage, par choix) ; fenêtre PySide6 de la S3 **reportée à la S10**.
+- S3 : squelette technique opérationnel (venv, pyproject, ruff, pytest, modèles, base SQLite, CLI Typer, README). Dépôt Git, `.gitignore` et convention de commit **en attente de décision** (aucun commit avant fin du stage, par choix) — *résolu fin de stage : dépôt publié sur GitHub (`Takou237/tscan2`), historique de commits conventionnels, poussé au 21/09/2026* ; fenêtre PySide6 de la S3 **reportée à la S10**.
 - S4 : import Nuclei/ZAP terminé, testé et vérifié manuellement en CLI.
 - S5–S6 : corrélation, scoring, statuts et historique terminés ; Scénario A démontrable en CLI.
 - Avant la S7 : bloc connaissances ajouté (CVE/NVD à la demande avec cache local, CISA KEV, références CWE, table d'alias CPE vérifiée contre l'API NVD) — commandes `tscan lookup-cve`, `tscan update-kev`.
@@ -15,6 +15,7 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 - S8 : **terminée** — détections actives non destructives (XSS, CSRF, SQLi error-based, fichiers sensibles, listing, CORS, TLS faible) + parseur Nessus/OpenVAS.
 - Début **S9** : **confirmation active non destructive (RF-23) livrée** — chaque constat du scan actif est re-vérifié par une nouvelle requête non destructive. **Correctif semaine 11 (28/08/2026) : le moteur ne confirme plus** ; un fait reproduit renforce le score du constat (plafonné 0,85) mais le laisse `Probable` ; « Confirmée » (score 0,95) est un verdict d'analyste posé par `correct_status_manually` (RF-12). Un fait contredit place le constat en `Potentiel faux positif` ; les sondes en échec laissent le constat `Probable`. Reporting (RF-27-28-29) déjà implémenté et vérifié (générateur + export HTML/Markdown + commande CLI `tscan report`).
 - S9 — **reporting et finalisation CLI : terminée et vérifiée au 21/08/2026**. Générateur de rapport (RF-27/28/29), exports HTML + Markdown, recommandations sourcées, commande `tscan report` ; tests d'intégration bout en bout (import → corrélation → scan → rapport, `test_reporting.py::test_end_to_end_import_correlate_scan_report`) ; revue d'architecture (conformité au chapitre 10) et revue de code effectuées. **Défaut corrigé** : plusieurs familles partageant une catégorie (ex. `security_misconfiguration`) faisaient écraser la règle au scoring → résolution de règle désambiguïsée (mots-clés de détection + score de base en repli, `scoring._resolve_rule`) avec 3 tests de régression. **Suite complète : 208 tests verts**, `ruff` propre sur `src/`.
+- **Fin de stage (septembre 2026)** : **parité passive OWASP ZAP** (17 règles `zap_passives` aux titres exacts ZAP + XSS attribut), **normalisation FR/EN** des catégories (table de synonymes, matching par mot entier), **correctif Brotli** (cause racine d'un échec silencieux : 0 détection sur serveurs compressant en Brotli), **bornes de volume des sondes** (durée prévisible, ES-02), **démarche anti-faux-positifs sur RF-20** (verdict sur la destination des redirections, sentinelle anti soft-404, signatures déclaratives `knowledge/fp_signatures.yaml` — le faux positif récurrent « panneau d'administration accessible » est éliminé, mesuré au scan #5 du 17/09/2026), **avertissement explicite de blocage anti-bot** (ES-05). **Publication GitHub** : `github.com/Takou237/tscan2`, commits poussés au 21/09/2026. **Guide utilisateur rédigé** : `docs/guide_utilisateur.md` (installation, CLI, GUI, UC1→UC5, hors-ligne, FAQ), 21/09/2026. **État vérifié au 21/09/2026 : 322 tests verts (suite complète rejouée), ruff propre, 54 règles YAML.** Reste : tests manuels GUI UC1→UC5, empaquetage (PyInstaller/Inno Setup), script de démonstration scénario B, changelog.
 - Transverse sécurité (bonus S9, 21/08/2026) : **ES-11** (validation d'intégrité des mises à jour KEV/NVD : taille max + format CVE) et **ES-12** (suivi des dépendances : `pip-audit` + `scripts/audit_deps.py`) **implémentés et vérifiés** — voir checklist ES ci-dessous.
 - **S10 — application desktop : câblée et vérifiée au 23/08/2026 ; CORRIGÉE le 27/08/2026** — le refactor S10 avait laissé `dialogs.py` syntaxiquement invalide et `main.py` manquant ; `dialogs.py` réécrit (3 dialogues dont `ReportDialog` ajouté), `main.py`/`MainWindow` recréé, `__main__.py` ajouté. Vérifié : `ruff` propre, 10 tests `test_gui_viewmodel.py` verts, ouverture réelle de la fenêtre en headless (31 résultats chargés en base). `tscan_gui` reconstruit à partir des briques existantes (MainWindow, FilterBar, FindingsTable, FindingDetailPanel) + `workers.py` (opérations longues en QThread, RNF-03) : fenêtre avec liste filtrable (statut/gravité/cible/recherche), détail (preuves, score, historique), correction manuelle avec raison (RF-12, ES-06), import (`ImportDialog`), scan avec périmètre (`ScanDialog`, RF-24, ES-01/02), rapport (`ReportDialog`, HTML/Markdown). **Vérifié** : `ruff` propre sur `src/` et `tests/`, 10 tests de logique de présentation sans écran dans `tests/test_gui_viewmodel.py` (filtres, tri, détail, correction UC3), ouverture réelle de la fenêtre en mode headless. Reste à exécuter sur poste avec affichage les parcours manuels UC1→UC5 (fin S10 / S11).
 - **Correctif comportemental (27/08/2026)** : le scan actif par défaut n'exécutait que la reconnaissance + le fingerprinting (`DEFAULT_ALLOWED_TESTS = {recon, fingerprint}`), d'où « 0 vulnérabilité » systématique (constat sur le scan de `https://owasp.org/www-project-juice-shop/`). Désormais `DEFAULT_ALLOWED_TESTS = TEST_TYPES` : un scan par défaut lance **toutes les familles de détection non destructives** (headers, clickjacking, BAC, components, XSS, CSRF, SQLi, fichiers sensibles, listing, CORS, TLS), toujours encadré par ES-02 (bornes durée/profondeur) et ES-03 (GET-only) ; `--tests` reste disponible pour restreindre. `test_scan_config_default_allowed_tests` mis à jour (6 tests CLI verts, 12 tests config verts).
@@ -35,11 +36,11 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 ## Semaine 3 — Mise en place du projet
 
 **Dépôt et structure**
-- [ ] Créer le dépôt Git (nom, description, visibilité) — *en attente de décision*
+- [x] Créer le dépôt Git (nom, description, visibilité) — *publié fin de stage : `github.com/Takou237/tscan2`, commits poussés au 21/09/2026*
 - [x] Définir la structure des dossiers (cœur, CLI, GUI, règles, tests, documentation)
-- [ ] `.gitignore` adapté à Python — *à créer lors du premier commit*
+- [x] `.gitignore` adapté à Python — *en place : venv, caches, build, bases `*.db` jamais versionnées*
 - [x] README initial (présentation courte, statut du projet, installation prévue)
-- [ ] Convention de messages de commit définie et respectée dès le premier commit — *en attente de décision*
+- [x] Convention de messages de commit définie et respectée dès le premier commit — *conventionnel (feat/fix/docs/chore/style), respectée sur tout l'historique*
 
 **Environnement**
 - [x] Environnement virtuel Python créé
@@ -149,7 +150,7 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 ## Semaine 11 — Intégration finale, durcissement, démonstration
 
 **Tests et sécurité**
-- [ ] Tests de bout en bout des scénarios A et B complets (CLI et desktop)
+- [ ] Tests de bout en bout des scénarios A et B complets (CLI et desktop) — *CLI validés au 08/09/2026 (Scénario A sur imports réels, Scénario B sur `https://polytechnique.cm/` avec rapports HTML/Markdown) ; reste le desktop (UC1→UC5)*
 - [ ] Revue de sécurité complète (voir checklist ES-01 à ES-12 ci-dessous)
 - [ ] Vérification du fonctionnement hors-ligne des fonctions concernées (RNF-14, RNF-15)
 
@@ -159,9 +160,9 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 - [ ] Installation testée sur une machine "propre" si possible
 
 **Documentation**
-- [ ] Documentation utilisateur finalisée
+- [x] Documentation utilisateur finalisée — *`docs/guide_utilisateur.md` (installation, CLI complète, application desktop, parcours UC1→UC5, hors-ligne, FAQ), rédigé le 21/09/2026, commandes vérifiées sur la version 0.1.0*
 - [ ] Documentation technique / architecture finalisée
-- [ ] README final à jour
+- [x] README final à jour — *chiffres vérifiés (322 tests, 54 règles), état réel au 21/09/2026, section Documentation ajoutée ; sera re-précisé après empaquetage*
 - [ ] Changelog à jour
 
 **Démonstration**
@@ -192,9 +193,9 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 
 ## Checklist transverse — Qualité et documentation continue
 
-- [x] Un test automatisé au minimum ajouté pour chaque nouveau module critique (208 tests verts au 21/08/2026)
+- [x] Un test automatisé au minimum ajouté pour chaque nouveau module critique (**322 tests verts au 21/09/2026**, suite complète rejouée ; 208 au 21/08/2026)
 - [x] Documentation mise à jour à chaque fin de bloc (checklist, README, prompt_maitre)
-- [ ] Commits réguliers, messages explicites — *suspendu par décision (aucun commit avant fin du stage)*
+- [x] Commits réguliers, messages explicites — *repris fin de stage : dépôt publié sur `github.com/Takou237/tscan2`, commits conventionnels, poussés au 21/09/2026*
 - [x] Comparaison avancement réel / planning effectuée chaque semaine (section « Suivi réel » ci-dessus)
 - [ ] Tout retard signalé et arbitré selon la priorité qualité > quantité (chapitre 2) — *en suivi : Git/PySide6 arbitrés, rien de bloquant*
 

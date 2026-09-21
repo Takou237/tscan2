@@ -3,20 +3,21 @@
 Plateforme d'analyse, de corrélation et de validation de vulnérabilités de sécurité,
 développée dans le cadre d'un stage à l'ANTIC.
 
-Tscan importe et fiabilise les résultats de scanners externes (Nuclei, OWASP ZAP), et
+Tscan importe et fiabilise les résultats de scanners externes (Nuclei, OWASP ZAP,
+Nessus/OpenVAS), et
 exécute son propre moteur de scan actif ciblé sur le périmètre web, avec pour objectif
 de réduire les faux positifs par corrélation et validation active non destructive.
 
 ## Statut du projet
 
-🚧 **En cours de développement — semaines 1 à 10 livrées et vérifiées ; application desktop (semaine 10) corrigée et opérationnelle (27/08/2026) ; reste la semaine 11 (durcissement, empaquetage, démonstration).**
+🚧 **En cours de développement — semaines 1 à 10 livrées et vérifiées ; semaine 11 largement avancée (correctifs corrélation/confirmation/progression au 28/08, scénarios A et B validés en CLI au 08/09, tests manuels GUI et empaquetage restants) ; travaux de fin de stage : parité OWASP ZAP, démarche anti-faux-positifs (sentinelle, signatures), publication sur GitHub, guide utilisateur. État vérifié au 21/09/2026 : 322 tests verts, ruff propre, 54 règles YAML.**
 
 Le cahier des charges complet (contexte, objectifs, étude de l'existant, besoins,
 architecture, technologies, planning) se trouve dans `docs/cahier_des_charges.pdf`.
 
 Fonctionnalités disponibles à ce stade :
 - Import de résultats Nuclei (JSONL), OWASP ZAP (JSON) et Nessus/OpenVAS (XML .nessus) vers le modèle pivot `Finding`
-- Système de règles YAML versionnées (`rules/`), une par famille du MVP
+- Système de règles YAML versionnées (`rules/`) — **54 règles** couvrant les familles du MVP et la parité passive OWASP ZAP
 - Pré-filtrage contextuel, corrélation multi-sources, scoring de confiance explicable
 - Statuts automatiques (Probable / Potentiel faux positif) et correction manuelle avec historique
 - **Scénario A démontrable en CLI** : import (x2 sources) → corrélation → statuts → preuves → correction
@@ -31,10 +32,17 @@ Fonctionnalités disponibles à ce stade :
 
 - **Validation active non destructive (RF-23)** : chaque constat `Probable` du scan actif est soumis à une seconde observation non destructive ; le fait décisif « reproductible » **renforce le score de confiance** du constat (plafonné à **0,85**) mais le laisse au statut **Probable** — le moteur ne confirme jamais : **« Confirmée » est un verdict d'analyste** (RF-12), posé par la correction manuelle (`tscan correct`, fenêtre desktop) avec un score de **0,95**. Un fait **contredit** place le constat en **Potentiel faux positif** pour revue prioritaire ; une sonde en échec laisse le constat tel quel (ES-05).
 - **Reporting (RF-27/28/29)** : générateur de rapport (résumé exécutif par gravité/statut + détails techniques, preuves, recommandations liées à des sources vérifiables OWASP/CWE) et commande `tscan report` avec export **HTML** et **Markdown**.
-- **Scénarios A et B démontrables en CLI de bout en bout** (import → corrélation → scan → validation active → rapport).
+- **Scénarios A et B démontrables en CLI de bout en bout** (import → corrélation → scan → validation active → rapport) ; **validés sur cibles réelles autorisées** au 08/09/2026 (Scénario B sur `https://polytechnique.cm/` : 6 constats, re-vérification sans faux positif automatique, rapports HTML/Markdown générés).
+- **Parité OWASP ZAP et fiabilisation (fin de stage)** : bundle de 17 règles passives aux titres exacts ZAP (`zap_passives.py` + `xss_attribute`), normalisation FR/EN des catégories avec table de synonymes, décompression Brotli (correctif d'un échec silencieux : 0 détection sur les serveurs LiteSpeed), bornes de volume des sondes (durée prévisible), message explicite en cas de blocage anti-bot.
+- **Démarche anti-faux-positifs (RF-20)** : verdict sur la **destination** des redirections (302 `/wp-admin/` → page de connexion n'est plus lu comme un panneau exposé), **sentinelle anti soft-404** (contrôle négatif avant sondes de chemins), **signatures de faux positifs** déclaratives dans `knowledge/fp_signatures.yaml`. Mesuré sur la cible d'étude : le faux positif récurrent « panneau d'administration » a disparu (0 occurrence au scan #5 du 17/09/2026).
+- **Publication** : dépôt GitHub `github.com/Takou237/tscan2` avec historique de commits et `.gitignore` protégeant les données de scan locales.
 - **Application desktop (semaine 10, opérationnelle au 27/08/2026)** : fenêtre principale `tscan_gui/main.py` (`MainWindow`) — liste des résultats filtrable (statut/gravité/cible/recherche, RF-11), détail avec preuves, score et historique (RF-12), correction manuelle de statut avec raison (ES-06), import depuis l'interface (RF-01), scan avec définition du périmètre (RF-24 / ES-01/02), corrélation, génération de rapport (HTML/Markdown). Les opérations longues (import, corrélation, scan, rapport) s'exécutent en arrière-plan (`tscan_gui/workers.py`, RNF-03), avec les dialogues `ImportDialog` / `ScanDialog` / `ReportDialog` (`tscan_gui/dialogs.py`). Logique de présentation testée sans écran (10 tests, `tests/test_gui_viewmodel.py`). Lancement : `python -m tscan_gui`.
 
-Interface desktop : fenêtre fonctionnelle et testée en headless ; parcours manuels UC1→UC5 à valider sur un poste avec affichage (semaine 11). Fanion de démarrage rapide : le refactor S10 avait laissé `dialogs.py` syntaxiquement invalide et `main.py` manquant — corrigé (27/08/2026), avec ajout de `ReportDialog`.
+Interface desktop : fenêtre fonctionnelle et testée en headless ; parcours manuels UC1→UC5 à valider sur un poste avec affichage (semaine 11) — procédure pas à pas dans `documentation/guide_test_manuel_gui.md`. Reste à livrer : empaquetage PyInstaller/Inno Setup, tests manuels GUI, script de démonstration scénario B.
+
+## État de la suite de tests (21/09/2026)
+
+**322 tests pytest verts** (exécutés intégralement le 21/09/2026, 3 min 28 s), `ruff` propre sur `src/` et `tests/`, audit des dépendances ES-12 vert. Les tests couvrent les parseurs d'import, la corrélation, le scoring, les règles, les détections (actives et passives), la confirmation/re-vérification, le reporting, la migration de données, la GUI (logique viewmodel) et les intégrations de bout en bout (scénarios A et B).
 
 ## Correctifs et ajouts confirmés (début semaine 11, 28/08/2026)
 
@@ -93,6 +101,16 @@ rules/              Règles de détection versionnées (YAML)
 tests/              Tests automatisés (pytest)
 docs/               Documentation du projet
 ```
+
+## Documentation
+
+| Document | Contenu |
+|---|---|
+| [`docs/guide_utilisateur.md`](docs/guide_utilisateur.md) | **Guide utilisateur** : installation, commandes CLI, application desktop, parcours UC1→UC5, FAQ |
+| `docs/checklist_projet.md` | Avancement réel semaine par semaine (source de vérité) |
+| `docs/cahier_des_charges.pdf` | Cahier des charges complet (besoins, architecture, exigences) |
+| `docs/rapport_de_stage.md` | Rapport de stage |
+| `../documentation/guide_test_manuel_gui.md` | Procédure de test manuel pas à pas de la GUI (UC1→UC5) |
 
 ## Installation (développement)
 
