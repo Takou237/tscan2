@@ -107,6 +107,7 @@ docs/               Documentation du projet
 | Document | Contenu |
 |---|---|
 | [`docs/guide_utilisateur.md`](docs/guide_utilisateur.md) | **Guide utilisateur** : installation, commandes CLI, application desktop, parcours UC1→UC5, FAQ |
+| [`docs/architecture.md`](docs/architecture.md) | **Architecture technique (version réalisée)** : couches, modèle de données, flux, découplage moteur/règles/connaissances, écarts vs prévisionnel |
 | `docs/checklist_projet.md` | Avancement réel semaine par semaine (source de vérité) |
 | `docs/cahier_des_charges.pdf` | Cahier des charges complet (besoins, architecture, exigences) |
 | `docs/rapport_de_stage.md` | Rapport de stage |

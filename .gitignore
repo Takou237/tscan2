@@ -30,6 +30,14 @@ data/knowledge_cache/
 .env
 *.local.yaml
 
+# Scripts et sorties de debug / vérification manuelle (jetables)
+/_check_corro.py
+/diag_db.py
+tests/_*.py
+tests/.labo_*.txt
+tests/.rescan_*.txt
+tests/rapport_test.html
+
 # Éditeurs / IDE
 .vscode/
 .idea/
