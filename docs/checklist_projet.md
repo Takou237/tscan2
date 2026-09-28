@@ -166,7 +166,7 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 - [ ] Changelog à jour
 
 **Démonstration**
-- [ ] Script de démonstration préparé (scénarios A et B)
+- [x] Script de démonstration préparé (scénarios A et B) — *`scripts/demo_scenario_a.sh` et `scripts/demo_scenario_b.sh` créés le 28/09/2026 et rejoués de bout en bout : base de démonstration isolée (la vraie `~/.tscan/tscan.db` n'est jamais touchée), labo local auto-démarré/arrêté pour le scénario B (24 constats, re-vérification RF-23 sans faux positif), imports Nuclei+ZAP → corrélation → correction tracée → rapport HTML pour le scénario A (5 constats), pauses commentées à chaque étape, alternative exécutable `dist/tscan.exe` documentée dans l'en-tête.*
 - [ ] Répétition complète de la démonstration
 - [ ] Vérification de chaque critère de réussite du MVP (chapitre 14)
 - [ ] Limites explicites du MVP formulées clairement pour l'encadrant (chapitre 15)

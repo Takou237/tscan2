@@ -39,6 +39,10 @@ tests/.labo_*.txt
 tests/.rescan_*.txt
 tests/.gui_out.txt
 tests/rapport_test.html
+# Rapports produits par les démonstrations scénarios A/B (artefacts locaux)
+/rapport_demo_a.html
+/rapport_demo_b.html
+
 
 # Éditeurs / IDE
 .vscode/

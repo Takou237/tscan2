@@ -76,6 +76,21 @@ iscc installer/tscan.iss      # ou via l'IDE Inno Setup : Build > Compile
 
 Sortie : `installer/Output/tscan-0.1.0-setup.exe`.
 
+### Démonstrations (scénarios du MVP, chapitre 14)
+
+Scripts prêts à exécuter devant témoin (Git Bash, à la racine du dépôt) :
+
+```bash
+bash scripts/demo_scenario_a.sh   # import Nuclei + ZAP → corrélation → statuts → rapport
+bash scripts/demo_scenario_b.sh   # scan actif sur labo local → re-vérification → correction → rapport
+```
+
+Chaque script utilise une base de démonstration isolée (la vraie base
+`~/.tscan/tscan.db` n'est jamais modifiée), démarre le serveur de laboratoire
+local pour le scénario B, et marque une pause à chaque étape pour commenter.
+Alternative : remplacer `TSCAN` par `./dist/tscan.exe` pour montrer
+l'exécutable empaqueté.
+
 ## État de la suite de tests (21/09/2026)
 
 **322 tests pytest verts** (exécutés intégralement le 21/09/2026, 3 min 28 s), `ruff` propre sur `src/` et `tests/`, audit des dépendances ES-12 vert. Les tests couvrent les parseurs d'import, la corrélation, le scoring, les règles, les détections (actives et passives), la confirmation/re-vérification, le reporting, la migration de données, la GUI (logique viewmodel) et les intégrations de bout en bout (scénarios A et B).
