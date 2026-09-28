@@ -65,7 +65,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}
 [Code]
 const
   WM_SETTINGCHANGE = $001A;
-  HWND_BROADCAST = $FFFF;
+  // HWND_BROADCAST ($FFFF) est déjà défini par Inno Setup — ne pas redéclarer.
 
 // Diffuse le changement d'environnement pour que les nouvelles consoles
 // (et l'Explorateur) prennent en compte le PATH mis à jour sans redémarrer.
