@@ -13,7 +13,8 @@ __pycache__/
 # Build / packaging
 build/
 dist/
-*.spec
+# Le fichier spec PyInstaller (tscan.spec) est versionné : il décrit la
+# génération des exécutables et embarque rules/ + knowledge/.
 
 # Base de données locale (jamais versionnée)
 *.db
@@ -36,6 +37,7 @@ data/knowledge_cache/
 tests/_*.py
 tests/.labo_*.txt
 tests/.rescan_*.txt
+tests/.gui_out.txt
 tests/rapport_test.html
 
 # Éditeurs / IDE

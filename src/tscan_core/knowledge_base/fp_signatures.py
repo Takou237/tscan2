@@ -19,9 +19,9 @@ from pathlib import Path
 
 import yaml
 
-DEFAULT_FP_SIGNATURES_FILE = (
-    Path(__file__).resolve().parents[3] / "knowledge" / "fp_signatures.yaml"
-)
+from tscan_core.app_paths import data_root
+
+DEFAULT_FP_SIGNATURES_FILE = data_root() / "knowledge" / "fp_signatures.yaml"
 
 
 class FpSignaturesError(Exception):

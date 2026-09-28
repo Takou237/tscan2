@@ -15,10 +15,11 @@ from pathlib import Path
 import yaml
 from sqlalchemy.orm import Session
 
+from tscan_core.app_paths import data_root
 from tscan_core.models import Rule
 from tscan_core.rule_engine.schema import RuleDefinition
 
-DEFAULT_RULES_DIR = Path(__file__).resolve().parents[3] / "rules"
+DEFAULT_RULES_DIR = data_root() / "rules"
 
 
 class RuleLoadError(Exception):

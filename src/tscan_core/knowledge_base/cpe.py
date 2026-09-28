@@ -23,7 +23,9 @@ from pathlib import Path
 
 import yaml
 
-DEFAULT_ALIAS_FILE = Path(__file__).resolve().parents[3] / "knowledge" / "cpe_aliases.yaml"
+from tscan_core.app_paths import data_root
+
+DEFAULT_ALIAS_FILE = data_root() / "knowledge" / "cpe_aliases.yaml"
 
 _VERSION_START_RE = re.compile(r"^\d")
 

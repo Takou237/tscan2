@@ -155,13 +155,13 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 - [ ] Vérification du fonctionnement hors-ligne des fonctions concernées (RNF-14, RNF-15)
 
 **Empaquetage**
-- [ ] Génération de l'exécutable Windows (PyInstaller)
-- [ ] Installeur généré et testé (Inno Setup)
+- [x] Génération de l'exécutable Windows (PyInstaller) — *réalisé le 28/09/2026 : fichier `tscan.spec` versionné, deux exécutables one-file `dist/tscan.exe` (CLI, 19 Mo) et `dist/tscan-gui.exe` (desktop, 58 Mo), règles `rules/` (54 YAML) et connaissances `knowledge/` embarquées et retrouvées via `tscan_core.app_paths.data_root()` (sys._MEIPASS). Nouveau module `app_paths.py` centralisant la résolution des chemins de données (5 modules adaptés, BNF-10 respecté). **Icône** (`assets/tscan.ico`) et **métadonnées de version Windows** (`version_info.txt` : produit Tscan 0.1.0, éditeur ANTIC) intégrées aux deux exécutables et vérifiées (propriétés > Détails). Vérifié : CLI `--help`, `version`, import Nuclei réel → corrélation (54 règles chargées depuis le bundle) → `list` corrects ; `tscan-gui.exe` démarre et se ferme proprement ; suite complète toujours verte (322 tests), ruff propre.*
+- [ ] Installeur généré et testé (Inno Setup) — *script `installer/tscan.iss` rédigé le 28/09/2026 : installation par utilisateur sans élévation (`{localappdata}\Programs\Tscan`), raccourcis menu Démarrer (application + console CLI) et bureau optionnel, ajout/retrait au PATH utilisateur avec diffusion `WM_SETTINGCHANGE`, désinstalleur propre, interface française. Reste : installer Inno Setup 6, compiler (`ISCC.exe installer/tscan.iss`) et tester sur machine propre.*
 - [ ] Installation testée sur une machine "propre" si possible
 
 **Documentation**
 - [x] Documentation utilisateur finalisée — *`docs/guide_utilisateur.md` (installation, CLI complète, application desktop, parcours UC1→UC5, hors-ligne, FAQ), rédigé le 21/09/2026, commandes vérifiées sur la version 0.1.0*
-- [ ] Documentation technique / architecture finalisée
+- [x] Documentation technique / architecture finalisée — *`docs/architecture.md` (version réalisée : couches, modèle de données, flux, découplage moteur/règles/connaissances, écarts vs prévisionnel) liée depuis le README ; rapport de stage rédigé (`docs/rapport_de_stage.md`, 704 lignes).*
 - [x] README final à jour — *chiffres vérifiés (322 tests, 54 règles), état réel au 21/09/2026, section Documentation ajoutée ; sera re-précisé après empaquetage*
 - [ ] Changelog à jour
 

@@ -19,7 +19,9 @@ from pathlib import Path
 
 import yaml
 
-DEFAULT_TECHNOLOGIES_FILE = Path(__file__).resolve().parents[3] / "knowledge" / "technologies.yaml"
+from tscan_core.app_paths import data_root
+
+DEFAULT_TECHNOLOGIES_FILE = data_root() / "knowledge" / "technologies.yaml"
 
 
 class FingerprintError(Exception):

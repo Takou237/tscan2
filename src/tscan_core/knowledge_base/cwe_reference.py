@@ -14,7 +14,9 @@ from pathlib import Path
 
 import yaml
 
-DEFAULT_CWE_FILE = Path(__file__).resolve().parents[3] / "knowledge" / "cwe_reference.yaml"
+from tscan_core.app_paths import data_root
+
+DEFAULT_CWE_FILE = data_root() / "knowledge" / "cwe_reference.yaml"
 
 
 @dataclass

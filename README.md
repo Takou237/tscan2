@@ -38,7 +38,43 @@ Fonctionnalités disponibles à ce stade :
 - **Publication** : dépôt GitHub `github.com/Takou237/tscan2` avec historique de commits et `.gitignore` protégeant les données de scan locales.
 - **Application desktop (semaine 10, opérationnelle au 27/08/2026)** : fenêtre principale `tscan_gui/main.py` (`MainWindow`) — liste des résultats filtrable (statut/gravité/cible/recherche, RF-11), détail avec preuves, score et historique (RF-12), correction manuelle de statut avec raison (ES-06), import depuis l'interface (RF-01), scan avec définition du périmètre (RF-24 / ES-01/02), corrélation, génération de rapport (HTML/Markdown). Les opérations longues (import, corrélation, scan, rapport) s'exécutent en arrière-plan (`tscan_gui/workers.py`, RNF-03), avec les dialogues `ImportDialog` / `ScanDialog` / `ReportDialog` (`tscan_gui/dialogs.py`). Logique de présentation testée sans écran (10 tests, `tests/test_gui_viewmodel.py`). Lancement : `python -m tscan_gui`.
 
-Interface desktop : fenêtre fonctionnelle et testée en headless ; parcours manuels UC1→UC5 à valider sur un poste avec affichage (semaine 11) — procédure pas à pas dans `documentation/guide_test_manuel_gui.md`. Reste à livrer : empaquetage PyInstaller/Inno Setup, tests manuels GUI, script de démonstration scénario B.
+Interface desktop : fenêtre fonctionnelle et testée en headless ; parcours manuels UC1→UC5 à valider sur un poste avec affichage (semaine 11) — procédure pas à pas dans `documentation/guide_test_manuel_gui.md`. Reste à livrer : compilation de l'installeur Inno Setup (script prêt dans `installer/tscan.iss`), tests manuels GUI, script de démonstration scénario B.
+
+## Empaquetage (PyInstaller, 28/09/2026)
+
+Génération des exécutables Windows autonomes (one-file) :
+
+```bash
+.venv/Scripts/python.exe -m PyInstaller tscan.spec --noconfirm
+```
+
+Produits dans `dist/` :
+- `tscan.exe` — CLI complète (~19 Mo)
+- `tscan-gui.exe` — application desktop (~58 Mo)
+
+Les règles de détection (`rules/`, 54 YAML) et la base de connaissances locale
+(`knowledge/`) sont **embarquées dans les exécutables** et retrouvées à
+l'exécution via `tscan_core.app_paths.data_root()` (compatible développement
+et mode gelé PyInstaller). Le fichier `tscan.spec` est versionné pour
+reproduire le build ; la CLI gélifiée a été vérifiée de bout en bout
+(import Nuclei → corrélation → listage, règles chargées depuis le bundle).
+
+Les deux exécutables portent l'icône `assets/tscan.ico` et les métadonnées
+Windows (produit Tscan, version 0.1.0, éditeur ANTIC — `version_info.txt`,
+visibles dans Propriétés > Détails).
+
+### Installeur Windows (Inno Setup)
+
+Le script `installer/tscan.iss` est prêt (installation par utilisateur sans
+droits administrateur, raccourcis menu Démarrer et bureau, ajout optionnel de
+la CLI au PATH, désinstalleur propre). Compilation, une fois
+[Inno Setup 6](https://jrsoftware.org/isdl.php) installé :
+
+```bash
+iscc installer/tscan.iss      # ou via l'IDE Inno Setup : Build > Compile
+```
+
+Sortie : `installer/Output/tscan-0.1.0-setup.exe`.
 
 ## État de la suite de tests (21/09/2026)
 
