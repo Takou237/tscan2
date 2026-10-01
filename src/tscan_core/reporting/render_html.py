@@ -142,6 +142,8 @@ def _render_site(target: ReportTarget, report: Report) -> str:
         _render_alert_detail(title, group) for title, group in by_title
     )
 
+    anti_fp_block = _render_anti_fp(target)
+
     return f"""
 <h2>
 \t\t
@@ -160,6 +162,7 @@ def _render_site(target: ReportTarget, report: Report) -> str:
 {summary_rows}
 \t</table>
 \t<div class="spacer-lg"></div>
+{anti_fp_block}
 
 \t<h3>Alertes</h3>
 \t<table class="alerts">
@@ -176,6 +179,61 @@ def _render_site(target: ReportTarget, report: Report) -> str:
 \t<h3>Alert Detail</h3>
 \t\t{details}
 """
+
+
+def _render_anti_fp(target: ReportTarget) -> str:
+    """Section « Méthodologie anti-faux positifs » (P5), après le résumé.
+
+    Présente les preuves d'exécution des contrôles négatifs du dernier scan
+    actif de la cible : sentinelle anti soft-404 (P2), sondes écartées comme
+    bruit de fond, verdicts différentiels validés (P1). Aucune donnée n'est
+    affichée si la cible n'a pas de scan actif récent (bloc vide).
+    """
+    anti_fp = target.anti_fp or {}
+    if not anti_fp:
+        return ""
+
+    items: list[str] = []
+    sentinelle = anti_fp.get("sentinelle")
+    if sentinelle:
+        status = sentinelle.get("status_code")
+        status_text = str(status) if status is not None else "échec réseau (non conclusif)"
+        items.append(
+            f"<li>Sentinelle anti soft-404 exécutée : <code>{escape(str(sentinelle.get('url', '')))}</code> "
+            f"-&gt; {escape(status_text)} (contrôle négatif P2)</li>"
+        )
+    stats = anti_fp.get("anti_fp") or {}
+    abstained = stats.get("sondes_ecartees") or []
+    if abstained:
+        items.append(
+            f"<li>Sondes écartées comme bruit de fond : <strong>{len(abstained)}</strong></li>"
+        )
+        rows = "".join(
+            f"<li><code>{escape(str(e.get('url', '')))}</code> "
+            f"({escape(str(e.get('famille', '')))}) — {escape(str(e.get('raison', '')))}</li>"
+            for e in abstained[:5]
+        )
+        extra = (
+            f"<li>… et {len(abstained) - 5} autre(s)</li>" if len(abstained) > 5 else ""
+        )
+        items.append(f"<ul>{rows}{extra}</ul>")
+    differentials = stats.get("differentielles_validees") or {}
+    if differentials:
+        detail = ", ".join(f"{escape(str(k))} : {v}" for k, v in sorted(differentials.items()))
+        items.append(
+            f"<li>Analyses différentielles validées (baseline / rupture / corrigée, P1) : {detail}</li>"
+        )
+
+    if not items:
+        return ""
+    return (
+        '\t<h3 class="left-header">Méthodologie anti-faux positifs</h3>\n'
+        '\t<p>Contrôles négatifs exécutés par le moteur pendant le dernier scan actif : '
+        "un constat n'est produit que si la réponse se distingue du bruit de fond "
+        '(RF-12, s\'abstenir plutôt que conclure).</p>\n'
+        f"\t<ul>\n{chr(10).join(items)}\n\t</ul>\n"
+        '\t<div class="spacer-lg"></div>\n'
+    )
 
 
 def _render_alert_row(title: str, group: list[ReportFinding]) -> str:

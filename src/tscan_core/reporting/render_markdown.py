@@ -46,6 +46,12 @@ def render_markdown(report: Report) -> str:
         sta_label = STATUS_LABEL.get(sta_key, sta_key)
         lines.append(f"| {sta_label} | {sta_count} |")
 
+    # Bilan « méthodologie anti-faux positifs » (P5) : preuves d'exécution
+    # de la sentinelle anti soft-404 (P2) et des verdicts différentiels
+    # (P1). Affiché une fois par cible qui a un scan actif récent.
+    for target in report.targets:
+        _render_anti_fp(lines, target)
+
     for target in report.targets:
         lines += [
             "",
@@ -87,3 +93,47 @@ def render_markdown(report: Report) -> str:
                 lines += [f"  - {h}" for h in f.status_history]
 
     return "\n".join(lines) + "\n"
+
+
+def _render_anti_fp(lines: list[str], target) -> None:
+    """Ajoute la section anti-faux positifs (P5) d'une cible, si disponible."""
+    anti_fp = getattr(target, "anti_fp", None) or {}
+    if not anti_fp:
+        return
+    lines += [
+        "",
+        f"### Méthodologie anti-faux positifs — {target.target}",
+        "",
+        (
+            "Contrôles négatifs exécutés par le moteur pendant le dernier scan actif "
+            "(un constat n'est produit que si la réponse se distingue du bruit de fond) :"
+        ),
+        "",
+    ]
+    sentinelle = anti_fp.get("sentinelle")
+    if sentinelle:
+        status = sentinelle.get("status_code")
+        status_text = str(status) if status is not None else "échec réseau (non conclusif)"
+        lines.append(
+            f"- Sentinelle anti soft-404 exécutée : `{sentinelle.get('url')}` "
+            f"-> {status_text} (P2)"
+        )
+    stats = anti_fp.get("anti_fp") or {}
+    abstained = stats.get("sondes_ecartees") or []
+    if abstained:
+        lines.append(f"- Sondes écartées comme bruit de fond : **{len(abstained)}**")
+        for entry in abstained[:5]:
+            lines.append(
+                f"  - `{entry.get('url', '')}` ({entry.get('famille', '')}) — "
+                f"{entry.get('raison', '')}"
+            )
+        if len(abstained) > 5:
+            lines.append(f"  - … et {len(abstained) - 5} autre(s)")
+    differentials = stats.get("differentielles_validees") or {}
+    if differentials:
+        detail = ", ".join(f"{famille} : {n}" for famille, n in sorted(differentials.items()))
+        lines.append(
+            f"- Analyses différentielles validées (baseline / rupture / corrigée, P1) : {detail}"
+        )
+    if not sentinelle and not abstained and not differentials:
+        lines.pop(0)  # aucune information exploitable : pas de section vide

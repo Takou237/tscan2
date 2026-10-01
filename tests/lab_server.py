@@ -66,6 +66,20 @@ ROUTES: dict[str, tuple[int, dict[str, str], bytes]] = {
         {"Content-Type": "text/html; charset=utf-8"},
         b"<html><body><h1>404 Not Found</h1></body></html>",
     ),
+    # P6 — Piège anti faux positif : page statique dont le contenu « parle »
+    # de SQL (article, documentation). La détection SQLi naïve (marqueur de
+    # corps sans baseline) y verrait une injection : le verdict différentiel
+    # (P1) doit s'abstenir car le marqueur figure aussi sur la requête normale.
+    "/static-error": (
+        200,
+        {"Content-Type": "text/html; charset=utf-8"},
+        (
+            b"<html><body><h1>Journal du developpeur</h1>"
+            b"<p>Le 12 mars : <code>SQL syntax error</code> en production,"
+            b" corrige le soir meme.</p>"
+            b"</body></html>"
+        ),
+    ),
     # Semaine 8 : cibles des détections actives bénignes et passives.
     "/contact": (
         200,
@@ -237,7 +251,12 @@ class _Handler(BaseHTTPRequestHandler):
                 f"<html><body><p>Vous avez dit : {html_module.escape(q)}</p></body></html>",
             )
             return
-        if path == SEARCH_ROUTE and "'" in q:
+        # Simulation réaliste d'une injection SQL error-based (P1) : la charge
+        # de rupture (apostrophe seule) casse la syntaxe -> erreur SQL ; la
+        # charge corrigée (deux apostrophes = littéral échappé valide) rend la
+        # requête syntaxiquement correcte -> plus d'erreur. C'est précisément
+        # le verdict différentiel que la détection SQLi attend (sqli.py, P1).
+        if path == SEARCH_ROUTE and q in ("' --", "' #"):
             self._send_text(
                 500,
                 f"<html><body><h1>Erreur serveur</h1>"
@@ -250,6 +269,26 @@ class _Handler(BaseHTTPRequestHandler):
                 "<html><body><p>Aucun resultat pour cette recherche.</p></body></html>",
             )
             return
+        # P6 — Mode soft-404 (activé par le test via `lab_server.enable_soft404()`):
+        # le serveur répond 200 avec une page générique pour TOUT chemin, en
+        # reflétant la requête et en arborant des marqueurs tentants (erreur
+        # SQL, « Index of », signature .env) : exactement le type de serveur
+        # qui fabrique des faux positifs avec une détection naïve. La
+        # sentinelle anti soft-404 (P2) et le verdict différentiel (P1)
+        # doivent y faire ABSTENIR les sondes au lieu de produire des constats.
+        if getattr(self.server, "soft404_mode", False):
+            generic = (
+                "<html><body><h1>Bienvenue sur notre site</h1>"
+                f"<p>Page introuvable : {self.path}</p>"
+                "<p>Erreurs recentes : SQL syntax error sur DATABASE_URL</p>"
+                "<h2>Index of /files/</h2>"
+                "<ul><li>Nos produits</li><li>Nos services</li>"
+                "<li>Contactez-nous</li></ul>"
+                "<p>© 2026 Exemple SARL</p></body></html>"
+            )
+            self._send_text(200, generic)
+            return
+
         if path == CORS_ECHO_ROUTE:
             origin = self.headers.get("Origin", "")
             self.send_response_only(200)
@@ -391,6 +430,16 @@ class LabServer:
             target=self._httpd.serve_forever, daemon=True, name="tscan-lab-server"
         )
         self._thread.start()
+
+    def enable_soft404(self) -> None:
+        """Active le mode soft-404 : 200 générique pour tout chemin (tests P6
+        anti-faux-positifs : la sentinelle et le verdict différentiel doivent
+        y faire abstraction des sondes au lieu de produire des constats)."""
+        self._httpd.soft404_mode = True
+
+    def disable_soft404(self) -> None:
+        """Désactive le mode soft-404 (comportement de labo normal)."""
+        self._httpd.soft404_mode = False
 
     def stop(self) -> None:
         self._httpd.shutdown()

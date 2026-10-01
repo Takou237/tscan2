@@ -7,6 +7,12 @@ signature de contenu attendue pour ce chemin est retrouvée dans la réponse.
 Exiger une signature réduit le risque de faux positif : une réponse 200 sur
 un chemin connu mais « vide » (page générique d'un framework) n'est pas
 suffisante pour conclure à une exposition.
+
+Sentinelle anti soft-404 (P2) : une signature seule peut néanmoins figurer
+dans la page générique du serveur (un faux « Index of » listant .env, une
+doc citant [core]...) ; toute réponse indiscernable du contrôle négatif
+(module `sentinel.py`, une calibration par scan) est écartée sans constat,
+avec compteur d'abstention pour le bilan anti-faux positifs (P5).
 """
 
 from __future__ import annotations
@@ -15,6 +21,11 @@ from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
 from tscan_core.scan.detections.probe import probe_fetch
+from tscan_core.scan.detections.sentinel import (
+    count_abstained,
+    get_calibration,
+    is_noise,
+)
 
 # Chemins fermés et signatures de contenu attendues : un constat n'est émis
 # que si le corps de la réponse contient l'une des signatures du chemin.
@@ -54,6 +65,10 @@ def run(
     base = config.target.rstrip("/")
     results: list[DetectionResult] = []
 
+    # Sentinelle anti soft-404 (P2) : une seule requête de calibration par
+    # scan (mise en cache), partagée avec les autres familles actives.
+    calibration, calibration_token = get_calibration(config, client, observations, on_event)
+
     for path, signatures in SENSITIVE_PATHS.items():
         url = f"{base}{path}"
         page = probe_fetch(client, url, observations, on_event)
@@ -65,6 +80,21 @@ def run(
 
         matching = _matching_signatures(page.body, signatures, path)
         if not matching:
+            continue
+
+        # Sentinelle anti soft-404 (P2) : la signature peut figurer dans la
+        # page générique du serveur ; une réponse indiscernable du contrôle
+        # négatif ne prouve pas l'exposition du fichier (on ne conclut pas).
+        if is_noise(page, calibration, calibration_token):
+            count_abstained(
+                observations,
+                "sensitive_files",
+                url,
+                (
+                    "signature présente mais réponse indiscernable de la sentinelle "
+                    "anti soft-404 (page générique du serveur) (P2)"
+                ),
+            )
             continue
 
         results.append(

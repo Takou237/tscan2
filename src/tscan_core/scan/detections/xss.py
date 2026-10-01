@@ -7,8 +7,20 @@ mécanisme permettrait d'injecter un script réel. Le paramètre `q` est un
 choix volontaire : c'est le paramètre de recherche le plus commun, il est
 couvert par le laboratoire de test et le périmètre fermé des sondes (ES-02).
 
-Une réflexion constatée est forte, mais la preuve d'exécution relève de la
-confirmation active (RF-23, semaine 8) : le constat reste `Probable`.
+Une réflexion constatée est forte, mais elle est d'abord soumise à deux
+contrôles anti-faux-positifs avant de produire un constat :
+
+* **requête normale (baseline, P1)** : la même page avec une valeur bénigne
+  du paramètre ne doit pas refléter le nonce — un écho global de la requête
+  (cache mal configuré, miroir qui renvoie l'URL entière) produirait une
+  « réflexion » sur n'importe quelle valeur ;
+* **sentinelle anti soft-404 (P2)** : une réponse indiscernable du contrôle
+  négatif du serveur (page générique qui réfléchit la querystring) ne prouve
+  rien.
+
+En cas de doute, le moteur s'abstient et compte l'abstention dans
+``observations["anti_fp"]`` (RF-12). La preuve d'exécution réelle relève de
+la confirmation active (RF-23) : le constat reste ``Probable``.
 """
 
 from __future__ import annotations
@@ -26,9 +38,19 @@ from tscan_core.scan.detections.probe import (
     select_probe_urls,
     skip_blocked_url,
 )
+from tscan_core.scan.detections.sentinel import (
+    count_abstained,
+    get_calibration,
+    is_noise,
+)
 
 # Périmètre fermé des sondes XSS (ES-02) : racine + chemins de recherche courants.
 PROBE_PATHS = ("/", "/search", "/search.php", "/index.php", "/echo", "/contact")
+
+# Valeur bénigne de la requête normale (baseline, P1) : aucun nonce ne peut y
+# figurer — si la réponse la reflète, la page renvoie la requête entière
+# (cache, miroir) et la réflexion de la charge n'est pas un signal XSS.
+BASELINE_VALUE = "tscan-baseline"
 
 RULE_ID = "RULE-XSS-001"
 SEVERITY = "high"
@@ -82,6 +104,11 @@ def run(
     # sur un paramètre sera laissée de côté pour les suivants.
     probe_urls = select_probe_urls(base, pages, PROBE_PATHS)
 
+    # Sentinelle anti soft-404 (P2) : une seule requête de calibration par
+    # scan (mise en cache dans `observations["sentinelle"]`), partagée avec
+    # les autres familles actives.
+    calibration, calibration_token = get_calibration(config, client, observations, on_event)
+
     blocked_urls: set[str] = set()
     for url in probe_urls:
         if skip_blocked_url(url, blocked_urls):
@@ -95,6 +122,39 @@ def run(
                 blocked_urls.add(url.rstrip("/"))
                 break
             if f'data-tscan-xss="{nonce}"' in page.body:
+                # P1 — requête normale (baseline) : la même page avec une
+                # valeur bénigne ne doit pas refléter le nonce. Si elle le
+                # reflète, la page renvoie la requête entière (cache, miroir
+                # d'URL) : la « réflexion » n'est pas un signal XSS.
+                baseline_url = _with_query(url, {param: BASELINE_VALUE})
+                baseline = probe_fetch(client, baseline_url, observations, on_event)
+                if baseline is not None and f'data-tscan-xss="{nonce}"' in baseline.body:
+                    count_abstained(
+                        observations,
+                        "xss",
+                        probe_url,
+                        (
+                            "nonce également reflété par la requête normale (cache ou "
+                            "écho global de la requête) : réflexion non concluante (P1)"
+                        ),
+                    )
+                    continue
+
+                # P2 — sentinelle anti soft-404 : une page générique qui
+                # réfléchit la querystring ne prouve pas une réflexion côté
+                # application.
+                if is_noise(page, calibration, calibration_token):
+                    count_abstained(
+                        observations,
+                        "xss",
+                        probe_url,
+                        (
+                            "réponse indiscernable de la sentinelle anti soft-404 "
+                            "(page générique du serveur) (P2)"
+                        ),
+                    )
+                    continue
+
                 results.append(
                     DetectionResult(
                         rule_id=RULE_ID,
@@ -120,6 +180,10 @@ def run(
                         },
                     )
                 )
+                # Un constat différentiel validé est compté (bilan P5 du rapport).
+                stats = observations.setdefault("anti_fp", {})
+                differentials = stats.setdefault("differentielles_validees", {})
+                differentials["xss"] = differentials.get("xss", 0) + 1
                 break  # une réflexion suffit à lever le doute ; pas de sondes redondantes
         if results:
             break

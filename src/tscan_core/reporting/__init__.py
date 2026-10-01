@@ -103,6 +103,10 @@ class ReportTarget:
     findings: list[ReportFinding] = field(default_factory=list)
     severity_counts: dict[str, int] = field(default_factory=dict)
     status_counts: dict[str, int] = field(default_factory=dict)
+    # Bilan anti-faux positifs du dernier scan actif de la cible (P5) :
+    # preuves d'exécution du contrôle négatif (sentinelle anti soft-404) et
+    # des verdicts différentiels (P1/P2). Vide si aucun scan actif.
+    anti_fp: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -183,6 +187,7 @@ def generate_report(
                 findings=report_findings,
                 severity_counts=severity_counts,
                 status_counts=status_counts,
+                anti_fp=_last_scan_anti_fp(session, target_name),
             )
         )
 
@@ -196,6 +201,43 @@ def generate_report(
         overall_severity_counts=overall_severity,
         overall_status_counts=overall_status,
     )
+
+
+def _last_scan_anti_fp(session: Session, target: str) -> dict:
+    """Bilan anti-faux positifs (P5) du dernier scan actif d'une cible.
+
+    Lit ``recon_json`` du scan : ``sentinelle_meta`` (contrôle négatif
+    exécuté) et ``anti_fp`` (sondes écartées, verdicts différentiels). Un
+    problème de lecture (ancien scan, JSON incomplet) laisse un dict vide :
+    le rapport se contente de ne pas afficher la section.
+    """
+    import json
+
+    scan = (
+        session.query(_Scan)
+        .filter(_Scan.target == target, _Scan.source == "tscan_engine")
+        .order_by(_Scan.started_at.desc(), _Scan.id.desc())
+        .first()
+    )
+    if scan is None or not scan.recon_json:
+        return {}
+    try:
+        data = json.loads(scan.recon_json)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    result: dict = {}
+    meta = data.get("sentinelle_meta")
+    if isinstance(meta, dict) and meta.get("url"):
+        result["sentinelle"] = {
+            "url": meta.get("url"),
+            "status_code": meta.get("status_code"),
+        }
+    anti_fp = data.get("anti_fp")
+    if isinstance(anti_fp, dict) and anti_fp:
+        result["anti_fp"] = anti_fp
+    return result
 
 
 def _cwe_index() -> dict[str, list[tuple[str, str]]]:

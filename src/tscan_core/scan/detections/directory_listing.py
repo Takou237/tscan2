@@ -6,6 +6,12 @@ que les serveurs web bien configurés refusent d'indexer (souvent 403). La
 signature « Index of / » est la plus répandue chez les serveurs de fichiers
 bénins comme malveillants : sa présence sur la cible indique une exposition
 de la liste des fichiers du dossier.
+
+Sentinelle anti soft-404 (P2) : un serveur qui fabrique des pages génériques
+(soft-404) peut inclure un faux « Index of » dans sa page d'erreur habillée ;
+toute réponse indiscernable du contrôle négatif (module `sentinel.py`, une
+calibration par scan) est écartée sans constat, avec compteur d'abstention
+pour le bilan anti-faux positifs (P5).
 """
 
 from __future__ import annotations
@@ -16,6 +22,11 @@ from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
 from tscan_core.scan.detections.probe import probe_fetch, select_probe_urls
+from tscan_core.scan.detections.sentinel import (
+    count_abstained,
+    get_calibration,
+    is_noise,
+)
 
 # Périmètre fermé des répertoires sondés (ES-02) : noms les plus courants de
 # dossiers que les applications exposent par erreur.
@@ -48,6 +59,10 @@ def run(
     base = config.target.rstrip("/")
     results: list[DetectionResult] = []
 
+    # Sentinelle anti soft-404 (P2) : une seule requête de calibration par
+    # scan (mise en cache), partagée avec les autres familles actives.
+    calibration, calibration_token = get_calibration(config, client, observations, on_event)
+
     # Échantillon BORNÉ de pages (ES-02) : le listing de répertoire est un
     # test par page, borné à 12 pages pour garder un volume prévisible.
     probe_urls = select_probe_urls(base, pages or {}, PROBE_PATHS, prioritize_query=False)
@@ -68,6 +83,20 @@ def run(
         if page.status_code != 200:
             continue
         if not INDEX_RE.search(page.body):
+            continue
+
+        # Sentinelle anti soft-404 (P2) : un faux « Index of » dans la page
+        # générique du serveur ne prouve pas l'exposition du répertoire.
+        if is_noise(page, calibration, calibration_token):
+            count_abstained(
+                observations,
+                "directory_listing",
+                url,
+                (
+                    "marqueur « Index of » présent mais réponse indiscernable de la "
+                    "sentinelle anti soft-404 (page générique du serveur) (P2)"
+                ),
+            )
             continue
 
         results.append(

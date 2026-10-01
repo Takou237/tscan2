@@ -160,6 +160,13 @@ def run_recon_scan(
             f"{config.target!r} (ES-01). Relancez avec --authorized après confirmation."
         )
 
+    # La sentinelle anti soft-404 des détections actives (P2) est calibrée
+    # une fois par scan : le cache mémoire est réinitialisé ici pour qu'aucune
+    # calibration d'un scan précédent ne fuite dans celui-ci.
+    from tscan_core.scan.detections.sentinel import reset_calibration
+
+    reset_calibration()
+
     if interrupt is None:
         interrupt = ScanInterrupt()
     # Le drapeau est attaché à la config (frozen) pour que `check_deadline`,

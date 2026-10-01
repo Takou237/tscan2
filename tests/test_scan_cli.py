@@ -101,7 +101,7 @@ def test_scan_reports_active_detection_findings(lab_server) -> None:
     for needle in (
         "XSS réfléchi potentiel",
         "Formulaire POST sans jeton anti-CSRF",
-        "Erreur SQL exposée : injection SQL error-based probable",
+        "Erreur SQL différentielle : injection SQL error-based probable",
         "Fichier sensible exposé",
         "Listing de répertoire exposé",
         "Configuration CORS permissive",
