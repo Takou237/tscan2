@@ -121,13 +121,15 @@ def test_s11_scenario_b_scan_validate_report(tmp_path: Path, lab_server) -> None
         assert result.exit_code == 0, result.stdout
         assert "Scan actif #" in result.stdout
         assert "Technologies détectées" in result.stdout
-        assert "Résultats de sécurité (34)" in result.stdout
+        # 37 constats depuis P7 : Permissions-Policy est émise par page (4
+        # pages crawlées sans l'en-tête) au lieu d'un constat agrégé.
+        assert "Résultats de sécurité (37)" in result.stdout
 
         # 2. Aucune confirmation automatique : le moteur laisse les constats
         #    Probable (RF-12 — « Confirmée » est un verdict d'analyste).
         with get_session(engine) as session:
             findings = session.query(Finding).all()
-            assert len(findings) == 34
+            assert len(findings) == 37
             for finding in findings:
                 assert finding.status == FindingStatus.PROBABLE
                 assert finding.confidence_score is not None

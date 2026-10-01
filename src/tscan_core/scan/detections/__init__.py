@@ -272,6 +272,17 @@ def run_active_detections(
         notify(on_event, "detect", "Détection de redirections géantes (fuite d'URL sensibles)…", 85)
         _commit(big_redirect.run(config, client, root, observations, started_at, pages, on_event))
         check_deadline(config, started_at)
+    if "permissions-policy" in allowed:
+        notify(on_event, "detect", "Analyse Permissions-Policy (parité ZAP 10063)…", 87)
+        _commit(
+            permissions_policy.run(config, client, root, observations, started_at, pages, on_event)
+        )
+        check_deadline(config, started_at)
+    if "modern-web-app" in allowed:
+        notify(on_event, "detect", "Analyse application web moderne (parité ZAP 10101)…", 87)
+        _commit(
+            modern_web_app.run(config, client, root, observations, started_at, pages, on_event)
+        )
     if "zap-passives" in allowed:
         notify(on_event, "detect", "Parité ZAP : alertes passives (cache, en-têtes, HTML, authentification)…", 86)
         _commit(zap_passive.run(config, client, root, observations, started_at, pages, on_event))
@@ -291,8 +302,10 @@ from . import (
     csrf,
     directory_listing,
     header_injection,
+    modern_web_app,
     open_redirect,
     path_traversal,
+    permissions_policy,
     security_headers,
     sensitive_files,
     sqli,

@@ -33,12 +33,6 @@ from tscan_core.knowledge_base.update_manager import lookup_component
 from tscan_core.models import Evidence, EvidenceType, Finding, FindingStatus, Scan
 from tscan_core.recon import fingerprint
 from tscan_core.recon.client import ReconError, RootResponse, fetch_url
-
-# Cadence de re-vérification : une sonde qui échoue n'a pas besoin de la
-# politique robuste de reconnaissance (3 tentatives, backoff exponentiel,
-# timeout 10 s ≈ 35 s par échec). Cible bloquante en fin de scan = des dizaines
-# de re-vérifications : on réduit à 1 tentative / timeout 5 s (ES-02).
-_REVERIFY_KWARGS = {"max_retries": 1, "backoff": 0.2, "timeout": 5.0}
 from tscan_core.recon.fingerprint import load_technologies
 from tscan_core.recon.tls import TlsProbeError, probe_tls
 from tscan_core.rule_engine.loader import load_rules
@@ -52,8 +46,10 @@ from tscan_core.scan.detections import (
     csrf,
     directory_listing,
     header_injection,
+    modern_web_app,
     open_redirect,
     path_traversal,
+    permissions_policy,
     sensitive_files,
     sqli,
     ssrf,
@@ -62,6 +58,12 @@ from tscan_core.scan.detections import (
     weak_hash,
     xss,
 )
+
+# Cadence de re-vérification : une sonde qui échoue n'a pas besoin de la
+# politique robuste de reconnaissance (3 tentatives, backoff exponentiel,
+# timeout 10 s ≈ 35 s par échec). Cible bloquante en fin de scan = des dizaines
+# de re-vérifications : on réduit à 1 tentative / timeout 5 s (ES-02).
+_REVERIFY_KWARGS = {"max_retries": 1, "backoff": 0.2, "timeout": 5.0}
 from tscan_core.scan.progress import notify
 from tscan_core.status import AUTOMATIC_ACTOR, change_status
 
@@ -107,6 +109,12 @@ _PRECISE_RECHECK_RULE_IDS = frozenset(
         "RULE-CORS-001",
         "RULE-OPEN-REDIRECT-001",
         "RULE-HDR-INJECTION-001",
+        # Familles de parité ZAP dédiées depuis P7 : constat par page avec
+        # probe_info rejouable (header_absent / body_regex) — une
+        # non-reproduction y est une vraie contradiction (l'alerte ne porte
+        # plus sur la page), donc un signal de faux positif exploitable.
+        "RULE-PERMISSIONS-NOTSET-001",
+        "RULE-MODERN-APP-001",
     }
 )
 
@@ -357,7 +365,18 @@ def _recheck_signal(signal: dict, page) -> bool:
 
 
 def _recheck_special(signal_type: str, probe_info: dict, page) -> bool:
-    """Ré-observation des signaux de famille spécifiques (non génériques)."""
+    """Ré-observation des signaux de famille spécifiques (non génériques).
+
+    ``header_absent`` (P7) : le constat porte sur l'ABSENCE d'un en-tête
+    (ex. Permissions-Policy) ; le fait est reproduit si l'en-tête est
+    toujours absent de la réponse fraîche.
+    """
+    if signal_type == "header_absent":
+        header = str(probe_info.get("signal_value") or "").strip().lower()
+        if not header:
+            return False
+        return header not in page.headers
+
     if signal_type == "cors_permissive":
         # CORS : re-sonde avec l'en-tête Origin de test et vérifie la violation.
         from tscan_core.scan.detections.cors import _is_permissive
@@ -654,6 +673,30 @@ def _run_weak_hash(
     }
 
 
+def _run_permissions_policy(
+    config: ScanConfig, client, observations: dict, cache: dict, on_event=None
+) -> set[str]:
+    root = _fresh_root(config, client, cache, on_event)
+    return {
+        _match_key(r.matched_at)
+        for r in permissions_policy.run(
+            config, client, root, observations, pages={}, on_event=on_event
+        )
+    }
+
+
+def _run_modern_web_app(
+    config: ScanConfig, client, observations: dict, cache: dict, on_event=None
+) -> set[str]:
+    root = _fresh_root(config, client, cache, on_event)
+    return {
+        _match_key(r.matched_at)
+        for r in modern_web_app.run(
+            config, client, root, observations, pages={}, on_event=on_event
+        )
+    }
+
+
 def _run_tls(config: ScanConfig, client, observations: dict, cache: dict) -> set[str]:
     del client, observations, cache
     try:
@@ -678,6 +721,8 @@ _CODE_RUNNERS = {
     "RULE-SSRF-001": _run_ssrf,
     "RULE-HDR-INJECTION-001": _run_header_injection,
     "RULE-WEAK-HASH-001": _run_weak_hash,
+    "RULE-PERMISSIONS-NOTSET-001": _run_permissions_policy,
+    "RULE-MODERN-APP-001": _run_modern_web_app,
 }
 
 

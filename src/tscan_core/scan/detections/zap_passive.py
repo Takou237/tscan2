@@ -25,12 +25,6 @@ _SKIP_CONTENT_TYPES = ("text/css", "application/javascript", "text/javascript")
 
 _SUSPICIOUS_COMMENT = re.compile(r"\b(?:TODO|FIXME|HACK|BUG|XXX)\b", re.IGNORECASE)
 
-_MODERN_JS = re.compile(
-    r"async\s+function\b|=>\s*[{(\s]|"
-    r"\bfetch\s*\(|\bWebSocket\s*\(|document\.querySelector\s*\(|"
-    r"\.map\s*\(|localStorage|sessionStorage|navigator\.serviceWorker\s*"
-)
-
 _CACHE_COMPLIANT = re.compile(r"\b(?:no-store|no-cache)\b")
 _CACHE_PUBLIC = re.compile(r"\bpublic\b|\bmax-age\b")
 
@@ -93,23 +87,9 @@ def run(
             root_url, suspicious,
         ))
 
-    # 3. Application web moderne (parité ZAP 10101/10102 « Modern Web
-    #    Application ») : marqueurs ES6+/API navigateur dans les scripts.
-    modern = []
-    for p in checked:
-        if not _is_html(p.headers) or not p.body:
-            continue
-        if _MODERN_JS.search(p.body):
-            modern.append(p.final_url)
-    if modern:
-        results.append(_result(
-            "RULE-MODERN-APP-001", CATEGORY_INFO, "info",
-            "Modern Web Application",
-            "La page utilise des API JavaScript modernes (ES6, fetch, Web Workers, "
-            "localStorage...) : la surface d'attaque côté client diffère d'un site "
-            "classique et mérite une analyse ciblée.",
-            root_url, modern,
-        ))
+    # 3. Application web moderne (parité ZAP 10101/10102) : déplacée dans le
+    # module dédié `modern_web_app.py` (P7 : un constat par page avec
+    # probe_info rejouable pour la re-vérification précise RF-23).
 
     # 4. Directives Cache-Control faibles ou absentes (parité ZAP 10049
     #    « Re-examine Cache-control Directives »).
@@ -155,17 +135,9 @@ def run(
             root_url, cached,
         ))
 
-    # 6. Permissions-Policy absent (parité ZAP 10063).
-    no_permissions = [p.final_url for p in checked if "permissions-policy" not in p.headers]
-    if no_permissions:
-        results.append(_result(
-            "RULE-PERMISSIONS-NOTSET-001", CATEGORY_MISCONFIG, "info",
-            "Permissions Policy Header Not Set",
-            "L'en-tête Permissions-Policy n'est pas défini : les fonctionnalités "
-            "navigateur (microphone, caméra, géolocalisation...) ne sont pas "
-            "restreintes par défaut pour les cadres de tiers.",
-            root_url, no_permissions,
-        ))
+    # 6. Permissions-Policy absent (parité ZAP 10063) : déplacé dans le module
+    # dédié `permissions_policy.py` (P7 : un constat par page avec probe_info
+    # rejouable pour la re-vérification précise RF-23).
 
     # 7. X-Frame-Options absent (parité ZAP 10020, anti-clickjacking).
     no_xfo = [p.final_url for p in checked if "x-frame-options" not in p.headers]

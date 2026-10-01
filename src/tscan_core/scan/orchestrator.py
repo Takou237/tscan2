@@ -97,6 +97,8 @@ _ACTIVE_DETECTION_TESTS = {
     "weak-hash",
     "security-headers",
     "big-redirect",
+    "permissions-policy",
+    "modern-web-app",
     "zap-passives",
 }
 

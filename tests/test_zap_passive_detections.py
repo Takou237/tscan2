@@ -64,9 +64,11 @@ def _run(module, config, client, root: RootResponse, pages=None):
 
 
 def test_zap_passive_on_lab_root_reports_common_headers(lab_server) -> None:
-    """La racine du lab porte un Server Apache/2.4.53, aucun Cache-Control,
-    ni Permissions-Policy, ni X-Frame-Options : quatre constats attendus, sans
-    faux positifs sur le content-type ni les commentaires."""
+    """La racine du lab porte un Server Apache/2.4.53, aucun Cache-Control et
+    aucun X-Frame-Options : trois constats attendus du bundle agrégé (les
+    alertes Permissions-Policy et Modern Web Application sont émises par leurs
+    modules dédiés P7, plus de doublon ici), sans faux positifs sur le
+    content-type ni les commentaires."""
     client = create_http_client()
     config = _config(lab_server)
     try:
@@ -76,9 +78,11 @@ def test_zap_passive_on_lab_root_reports_common_headers(lab_server) -> None:
         assert {
             "RULE-SERVER-HEADER-001",
             "RULE-CACHE-CONTROL-001",
-            "RULE-PERMISSIONS-NOTSET-001",
             "RULE-XFO-NOTSET-001",
         } <= by_rule
+        # Déduplication P7 : ces deux alertes ne sont plus émises ici.
+        assert "RULE-PERMISSIONS-NOTSET-001" not in by_rule
+        assert "RULE-MODERN-APP-001" not in by_rule
         assert by_rule.isdisjoint(
             {"RULE-CT-MISSING-001", "RULE-SUSPICOMM-001", "RULE-HASH-001"}
         )
@@ -115,7 +119,9 @@ def test_zap_passive_synthetic_rules_trigger(lab_server) -> None:
         assert "RULE-SUSPICOMM-001" in trigger(
             {"Content-Type": "text/html"}, "<!-- TODO: refactor -->", "/cmt"
         )
-        assert "RULE-MODERN-APP-001" in trigger(
+        # Modern Web Application : émise par le module dédié (P7), plus de
+        # doublon dans le bundle agrégé.
+        assert "RULE-MODERN-APP-001" not in trigger(
             {"Content-Type": "text/html"},
             "const load = () => fetch('/api/users');",
             "/spa",
