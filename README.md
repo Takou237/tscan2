@@ -10,7 +10,7 @@ de réduire les faux positifs par corrélation et validation active non destruct
 
 ## Statut du projet
 
-🚧 **En cours de développement — semaines 1 à 10 livrées et vérifiées ; semaine 11 largement avancée (correctifs corrélation/confirmation/progression au 28/08, scénarios A et B validés en CLI au 08/09, tests manuels GUI et empaquetage restants) ; travaux de fin de stage : parité OWASP ZAP, démarche anti-faux-positifs (sentinelle, signatures), publication sur GitHub, guide utilisateur. État vérifié au 21/09/2026 : 322 tests verts, ruff propre, 54 règles YAML.**
+✅ **Développement terminé — semaines 1 à 11 livrées et vérifiées (empaquetage PyInstaller + installeur Inno Setup produits le 28/09/2026) ; travaux de fin de stage : parité OWASP ZAP, démarche anti-faux-positifs complète (sentinelle anti soft-404 généralisée, analyse différentielle, re-vérification précise des en-têtes absents), publication sur GitHub, guide utilisateur, rapport de stage. État vérifié au 02/10/2026 : 343 tests verts, ruff propre, 54 règles YAML. Reste (logistique ANTIC) : tests manuels GUI UC1→UC5, installation testée sur machine « propre », répétition de la démonstration.**
 
 Le cahier des charges complet (contexte, objectifs, étude de l'existant, besoins,
 architecture, technologies, planning) se trouve dans `docs/cahier_des_charges.pdf`.
@@ -35,10 +35,11 @@ Fonctionnalités disponibles à ce stade :
 - **Scénarios A et B démontrables en CLI de bout en bout** (import → corrélation → scan → validation active → rapport) ; **validés sur cibles réelles autorisées** au 08/09/2026 (Scénario B sur `https://polytechnique.cm/` : 6 constats, re-vérification sans faux positif automatique, rapports HTML/Markdown générés).
 - **Parité OWASP ZAP et fiabilisation (fin de stage)** : bundle de 17 règles passives aux titres exacts ZAP (`zap_passives.py` + `xss_attribute`), normalisation FR/EN des catégories avec table de synonymes, décompression Brotli (correctif d'un échec silencieux : 0 détection sur les serveurs LiteSpeed), bornes de volume des sondes (durée prévisible), message explicite en cas de blocage anti-bot.
 - **Démarche anti-faux-positifs (RF-20)** : verdict sur la **destination** des redirections (302 `/wp-admin/` → page de connexion n'est plus lu comme un panneau exposé), **sentinelle anti soft-404** (contrôle négatif avant sondes de chemins), **signatures de faux positifs** déclaratives dans `knowledge/fp_signatures.yaml`. Mesuré sur la cible d'étude : le faux positif récurrent « panneau d'administration » a disparu (0 occurrence au scan #5 du 17/09/2026).
+- **Machine anti-faux-positifs complète (fin de stage, P1→P7)** : **analyse différentielle SQLi** (baseline + charge de rupture + charge corrigée — un marqueur d'erreur n'est concluant que s'il disparaît avec la charge corrigée), **baseline XSS** (un nonce reflété aussi par la requête normale n'est pas un signal), **sentinelle anti soft-404 généralisée** (SQLi, XSS, fichiers sensibles, listing de répertoire — une réponse indiscernable du bruit de fond ne produit plus de constat), **section « Méthodologie anti-faux positifs » dans les rapports** (compteurs de sondes écartées, preuve que les contrôles ont tourné), et **re-vérification précise RF-23 des en-têtes absents et règles parité ZAP** (HSTS, X-Content-Type-Options, X-Frame-Options, Permissions-Policy, Modern Web App : un constat par page avec `probe_info` rejouable — fait reproduit → score renforcé, fait contredit → potentiel faux positif).
 - **Publication** : dépôt GitHub `github.com/Takou237/tscan2` avec historique de commits et `.gitignore` protégeant les données de scan locales.
 - **Application desktop (semaine 10, opérationnelle au 27/08/2026)** : fenêtre principale `tscan_gui/main.py` (`MainWindow`) — liste des résultats filtrable (statut/gravité/cible/recherche, RF-11), détail avec preuves, score et historique (RF-12), correction manuelle de statut avec raison (ES-06), import depuis l'interface (RF-01), scan avec définition du périmètre (RF-24 / ES-01/02), corrélation, génération de rapport (HTML/Markdown). Les opérations longues (import, corrélation, scan, rapport) s'exécutent en arrière-plan (`tscan_gui/workers.py`, RNF-03), avec les dialogues `ImportDialog` / `ScanDialog` / `ReportDialog` (`tscan_gui/dialogs.py`). Logique de présentation testée sans écran (10 tests, `tests/test_gui_viewmodel.py`). Lancement : `python -m tscan_gui`.
 
-Interface desktop : fenêtre fonctionnelle et testée en headless ; parcours manuels UC1→UC5 à valider sur un poste avec affichage (semaine 11) — procédure pas à pas dans `documentation/guide_test_manuel_gui.md`. Reste à livrer : compilation de l'installeur Inno Setup (script prêt dans `installer/tscan.iss`), tests manuels GUI, script de démonstration scénario B.
+Interface desktop : fenêtre fonctionnelle et testée en headless ; parcours manuels UC1→UC5 à valider sur un poste avec affichage — procédure pas à pas dans `documentation/guide_test_manuel_gui.md`. Reste à livrer : tests manuels GUI et test d'installation de l'installeur sur machine « propre ».
 
 ## Empaquetage (PyInstaller, 28/09/2026)
 
@@ -67,7 +68,8 @@ visibles dans Propriétés > Détails).
 
 Le script `installer/tscan.iss` est prêt (installation par utilisateur sans
 droits administrateur, raccourcis menu Démarrer et bureau, ajout optionnel de
-la CLI au PATH, désinstalleur propre). Compilation, une fois
+la CLI au PATH, désinstalleur propre) et **déjà compilé le 28/09/2026** :
+`installer/Output/tscan-0.1.0-setup.exe` (~95 Mo). Pour recompiler, une fois
 [Inno Setup 6](https://jrsoftware.org/isdl.php) installé :
 
 ```bash
@@ -81,8 +83,9 @@ Sortie : `installer/Output/tscan-0.1.0-setup.exe`.
 Scripts prêts à exécuter devant témoin (Git Bash, à la racine du dépôt) :
 
 ```bash
-bash scripts/demo_scenario_a.sh   # import Nuclei + ZAP → corrélation → statuts → rapport
-bash scripts/demo_scenario_b.sh   # scan actif sur labo local → re-vérification → correction → rapport
+bash scripts/demo_scenario_a.sh        # import Nuclei + ZAP → corrélation → statuts → rapport
+bash scripts/demo_scenario_b.sh        # scan actif sur labo local → re-vérification → correction → rapport
+bash scripts/demo_false_positives.sh   # rapport obsolète importé → ré-observation → taux de faux positifs détectés
 ```
 
 Chaque script utilise une base de démonstration isolée (la vraie base
@@ -91,9 +94,9 @@ local pour le scénario B, et marque une pause à chaque étape pour commenter.
 Alternative : remplacer `TSCAN` par `./dist/tscan.exe` pour montrer
 l'exécutable empaqueté.
 
-## État de la suite de tests (21/09/2026)
+## État de la suite de tests (02/10/2026)
 
-**322 tests pytest verts** (exécutés intégralement le 21/09/2026, 3 min 28 s), `ruff` propre sur `src/` et `tests/`, audit des dépendances ES-12 vert. Les tests couvrent les parseurs d'import, la corrélation, le scoring, les règles, les détections (actives et passives), la confirmation/re-vérification, le reporting, la migration de données, la GUI (logique viewmodel) et les intégrations de bout en bout (scénarios A et B).
+**343 tests pytest verts** (exécutés intégralement le 02/10/2026, 3 min 35 s), `ruff` propre sur `src/` et `tests/`, audit des dépendances ES-12 vert. Les tests couvrent les parseurs d'import, la corrélation, le scoring, les règles, les détections (actives et passives), la machine anti-faux-positifs (sentinelle, analyse différentielle, tests qui forcent le faux positif), la confirmation/re-vérification, le reporting, la migration de données, la GUI (logique viewmodel) et les intégrations de bout en bout (scénarios A et B).
 
 ## Correctifs et ajouts confirmés (début semaine 11, 28/08/2026)
 
@@ -161,7 +164,7 @@ docs/               Documentation du projet
 | [`docs/architecture.md`](docs/architecture.md) | **Architecture technique (version réalisée)** : couches, modèle de données, flux, découplage moteur/règles/connaissances, écarts vs prévisionnel |
 | `docs/checklist_projet.md` | Avancement réel semaine par semaine (source de vérité) |
 | `docs/cahier_des_charges.pdf` | Cahier des charges complet (besoins, architecture, exigences) |
-| `docs/rapport_de_stage.md` | Rapport de stage |
+| `docs/rapport_de_stage.tex` | Rapport de stage (LaTeX, compilable sur Overleaf/pdfLaTeX) |
 | `../documentation/guide_test_manuel_gui.md` | Procédure de test manuel pas à pas de la GUI (UC1→UC5) |
 
 ## Installation (développement)
