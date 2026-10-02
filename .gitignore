@@ -13,6 +13,8 @@ __pycache__/
 # Build / packaging
 build/
 dist/
+# Sortie de compilation Inno Setup (installeur binaire ~95 Mo, jamais versionné)
+installer/Output/
 # Le fichier spec PyInstaller (tscan.spec) est versionné : il décrit la
 # génération des exécutables et embarque rules/ + knowledge/.
 
@@ -42,6 +44,7 @@ tests/rapport_test.html
 # Rapports produits par les démonstrations scénarios A/B (artefacts locaux)
 /rapport_demo_a.html
 /rapport_demo_b.html
+/rapport_demo_fp.html
 
 
 # Éditeurs / IDE
