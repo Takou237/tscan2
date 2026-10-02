@@ -211,8 +211,6 @@ def _target_blocked(recon: dict | None) -> dict | None:
     return {"reasons": reasons}
 
 
-
-
 def report_task(
     output_path: str | Path, fmt: str, target: str | None = None
 ) -> Callable[[Any], dict]:

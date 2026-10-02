@@ -233,3 +233,55 @@ def test_manual_correction_updates_history(session: Session) -> None:
     assert detail.score == 0.0  # un faux positif manuel annule la confiance
     assert len(detail.history) == old_history_count + 1
     assert any("analyste_gui" in h for h in detail.history)
+
+
+# --- Bilan des actions longues affiché à l'analyste ------------------------
+#
+# `workers.py` renvoie des indicateurs numériques ; `_summarize_task` les
+# traduit en une ligne lisible pour la boîte de dialogue de l'interface.
+# Sans cela, un scan se concluait par « Opération terminée. » sans indiquer le
+# nombre de constats trouvés.
+
+
+def test_summarize_scan_reports_finding_count() -> None:
+    from tscan_gui.main import _summarize_task
+
+    summary = _summarize_task({"findings": 46, "target": "http://127.0.0.1:8080/"})
+    assert "46 constat(s)" in summary
+    assert "http://127.0.0.1:8080/" in summary
+
+
+def test_summarize_scan_mentions_manual_interrupt() -> None:
+    from tscan_gui.main import _summarize_task
+
+    summary = _summarize_task(
+        {"findings": 12, "target": "http://127.0.0.1:8080/", "interrupted": True}
+    )
+    assert "conservés" in summary
+
+
+def test_summarize_report_reports_path_and_count() -> None:
+    from tscan_gui.main import _summarize_task
+
+    summary = _summarize_task({"path": "rapport.html", "chars": 4096, "count": 46})
+    assert "rapport.html" in summary
+    assert "46 constat(s)" in summary
+
+
+def test_summarize_correlate_reports_status_breakers() -> None:
+    from tscan_gui.main import _summarize_task
+
+    summary = _summarize_task(
+        {"count": 19, "probable": 12, "potential_false_positives": 4}
+    )
+    assert "4 potentiel(s) faux positif(s)" in summary
+    assert "12 probable(s)" in summary
+
+
+def test_summarize_ignores_unknown_or_missing_detail() -> None:
+    """Une tâche sans indicateur exploitable ne doit rien ajouter au message."""
+    from tscan_gui.main import _summarize_task
+
+    assert _summarize_task(None) == ""
+    assert _summarize_task("pas un dict") == ""
+    assert _summarize_task({"inconnu": 1}) == ""

@@ -52,6 +52,39 @@ from tscan_gui.workers import (
 )
 
 
+def _summarize_task(detail: object) -> str:
+    """Traduit en une ligne lisible le `dict` renvoyé par une tâche longue.
+
+    `workers.py` renvoie des indicateurs (nombre de constats, compteurs par
+    statut, chemin du rapport) : sans cette traduction, la boîte de dialogue
+    n'affichait que « Opération terminée. » et l'analyste ignorait ce que son
+    action avait produit. Une clé distinctive identifie l'action.
+    """
+    if not isinstance(detail, dict):
+        return ""
+    if "findings" in detail:  # scan actif
+        text = (
+            f"{detail['findings']} constat(s) relevé(s) sur "
+            f"{detail.get('target', 'la cible')}."
+        )
+        if detail.get("interrupted"):
+            text += "\nArrêt manuel : les constats déjà trouvés sont conservés."
+        return text
+    if "path" in detail:  # rapport
+        return (
+            f"{detail.get('count', 0)} constat(s) dans le rapport, écrit dans "
+            f"{detail['path']}."
+        )
+    if "potential_false_positives" in detail:  # corrélation
+        return (
+            f"{detail.get('count', 0)} constat(s) corrélé(s) — "
+            f"{detail.get('probable', 0)} probable(s), "
+            f"{detail.get('potential_false_positives', 0)} potentiel(s) "
+            "faux positif(s)."
+        )
+    return ""
+
+
 class MainWindow(QMainWindow):
     """Fenêtre principale : liste des résultats, filtres, détail, corrections
     et lancement des actions longues (import / scan / rapport)."""
@@ -227,7 +260,8 @@ class MainWindow(QMainWindow):
         self.stop_action.setEnabled(False)
         self._current_interrupt = None
         if result.ok:
-            message = f"{success}\n{result.message}"
+            summary = _summarize_task(result.detail)
+            message = f"{success}\n{summary}" if summary else success
             # Scan actif refusé par la cible (anti-bot/WAF) : le bilan est
             # incomplet, on prévient l'analyste au lieu d'afficher un résumé
             # trompeusement normal.
@@ -261,9 +295,17 @@ class MainWindow(QMainWindow):
             if not result.ok:
                 self._on_task_done(result, "Import.")
                 return
-            message = f"{result.message}\n{result.detail}"
-            if result.detail and isinstance(result.detail, dict) and result.detail.get("rex"):
-                rex_r = result.detail["rex"]
+            detail = result.detail if isinstance(result.detail, dict) else {}
+            # Le bilan est formaté en français : afficher le `dict` renvoyé par
+            # `import_task` (`{'scan_id': 1, 'count': 3, ...}`) dans la boîte de
+            # dialogue était illisible pour l'analyste.
+            message = (
+                f"Import terminé : {detail.get('count', 0)} résultat(s) importé(s) "
+                f"depuis {detail.get('source', '?')} "
+                f"(scan #{detail.get('scan_id', '?')})."
+            )
+            if detail.get("rex"):
+                rex_r = detail["rex"]
                 message += (
                     f"\nRé-observation (scan actif #{rex_r['active_scan_id']}) : "
                     f"{rex_r['total']} constat(s) importé(s) — "
