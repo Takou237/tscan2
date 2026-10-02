@@ -283,6 +283,11 @@ def run_active_detections(
         _commit(
             modern_web_app.run(config, client, root, observations, started_at, pages, on_event)
         )
+    if "header-notset" in allowed:
+        notify(on_event, "detect", "Analyse en-têtes de sécurité absents (parité ZAP 10020/10035/10038)…", 88)
+        _commit(
+            header_notset.run(config, client, root, observations, started_at, pages, on_event)
+        )
     if "zap-passives" in allowed:
         notify(on_event, "detect", "Parité ZAP : alertes passives (cache, en-têtes, HTML, authentification)…", 86)
         _commit(zap_passive.run(config, client, root, observations, started_at, pages, on_event))
@@ -302,6 +307,7 @@ from . import (
     csrf,
     directory_listing,
     header_injection,
+    header_notset,
     modern_web_app,
     open_redirect,
     path_traversal,

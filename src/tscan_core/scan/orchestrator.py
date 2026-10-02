@@ -99,6 +99,7 @@ _ACTIVE_DETECTION_TESTS = {
     "big-redirect",
     "permissions-policy",
     "modern-web-app",
+    "header-notset",
     "zap-passives",
 }
 

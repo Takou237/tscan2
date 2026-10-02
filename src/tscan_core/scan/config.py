@@ -44,6 +44,7 @@ TEST_TYPES: frozenset[str] = frozenset(
         "big-redirect",
         "permissions-policy",
         "modern-web-app",
+        "header-notset",
         "zap-passives",
         "path-traversal",
         "open-redirect",

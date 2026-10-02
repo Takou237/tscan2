@@ -1,6 +1,8 @@
 """Tests des détecteurs de parité OWASP ZAP ajoutés à la semaine augmentée :
-en-têtes de sécurité (HSTS, X-Content-Type-Options, X-Powered-By) et
-redirection géante (Big Redirect).
+en-tête révélateur (X-Powered-By) et redirection géante (Big Redirect).
+
+Les constats d'en-têtes ABSENTS (HSTS, X-Content-Type-Options) sont déplacés
+dans `header_notset.py` (suite P7, tests dans `test_header_notset.py`).
 
 Chaque module `run(...)` est évalué contre le laboratoire local, qui fournit
 des routes positives (racine `/`, `/big-redirect`) et leurs contre-exemples
@@ -28,49 +30,37 @@ def _run(module, config, client, root: RootResponse, **kwargs):
     return module.run(config, client, root, {}, None, **kwargs)
 
 
-def test_security_headers_on_root_report_hsts_xcto_xpoweredby(lab_server) -> None:
-    """La racine du lab expédie `X-Powered-By: PHP/7.4.33` mais aucun en-tête
-    HSTS/X-Content-Type-Options : les trois constats ZAP sortent, avec leurs
-    titres exacts (parité 10035, 10038, 10037)."""
+def test_security_headers_on_root_reports_xpoweredby_only(lab_server) -> None:
+    """La racine du lab expédie `X-Powered-By: PHP/7.4.33` : le constat ZAP
+    10037 sort avec son titre exact. Les en-têtes absents (HSTS, XCTO) sont
+    désormais émis par le module dédié header_notset (suite P7)."""
     client = create_http_client()
     config = _config(lab_server)
     try:
         root = fetch_root(client, config.target)
         results = _run(security_headers, config, client, root)
         by_rule = {r.rule_id: r for r in results}
-        assert set(by_rule) == {
-            "RULE-HSTS-NOTSET-001",
-            "RULE-XCTO-NOTSET-001",
-            "RULE-XPOWEREDBY-001",
-        }
-        assert by_rule["RULE-HSTS-NOTSET-001"].title == "Strict-Transport-Security Header Not Set"
-        assert by_rule["RULE-HSTS-NOTSET-001"].severity == "medium"
-        assert by_rule["RULE-HSTS-NOTSET-001"].category == "security_misconfiguration"
-        assert (
-            by_rule["RULE-XCTO-NOTSET-001"].title == "X-Content-Type-Options Header Missing"
-        )
-        assert by_rule["RULE-XCTO-NOTSET-001"].severity == "medium"
+        assert set(by_rule) == {"RULE-XPOWEREDBY-001"}
         assert (
             by_rule["RULE-XPOWEREDBY-001"].title
             == 'Server Leaks Information via "X-Powered-By" HTTP Response Header Field(s)'
         )
         assert by_rule["RULE-XPOWEREDBY-001"].severity == "low"
         assert "PHP/7.4.33" in by_rule["RULE-XPOWEREDBY-001"].evidence_text
-        assert config.target in by_rule["RULE-HSTS-NOTSET-001"].evidence_text
     finally:
         client.close()
 
 
 def test_security_headers_on_bare_hides_technology_header(lab_server) -> None:
     """Contre-exemple X-Powered-By : `/bare` ne porte aucune signature de
-    technologie → uniquement les constats d'en-têtes manquants, aucun X-Powered-By."""
+    technologie → aucun constat (les en-têtes absents sont émis par
+    header_notset, suite P7)."""
     client = create_http_client()
     config = _config(lab_server, path="/bare")
     try:
         root = fetch_root(client, config.target)
         results = _run(security_headers, config, client, root)
-        by_rule = {r.rule_id for r in results}
-        assert by_rule == {"RULE-HSTS-NOTSET-001", "RULE-XCTO-NOTSET-001"}
+        assert results == []
     finally:
         client.close()
 

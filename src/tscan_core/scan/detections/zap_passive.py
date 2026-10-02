@@ -139,16 +139,9 @@ def run(
     # dédié `permissions_policy.py` (P7 : un constat par page avec probe_info
     # rejouable pour la re-vérification précise RF-23).
 
-    # 7. X-Frame-Options absent (parité ZAP 10020, anti-clickjacking).
-    no_xfo = [p.final_url for p in checked if "x-frame-options" not in p.headers]
-    if no_xfo:
-        results.append(_result(
-            "RULE-XFO-NOTSET-001", CATEGORY_MISCONFIG, "low",
-            "X-Frame-Options Header Not Set",
-            "L'en-tête X-Frame-Options n'est pas défini : la page peut être "
-            "embarquée dans une frame d'un site tiers (clickjacking).",
-            root_url, no_xfo,
-        ))
+    # 7. X-Frame-Options absent (parité ZAP 10020, anti-clickjacking) :
+    # déplacé dans le module dédié `header_notset.py` (suite P7 : un constat
+    # par page avec probe_info rejouable pour la re-vérification précise RF-23).
 
     # 8. En-têtes serveur révélateurs (parité ZAP 10026/10036/10061/10052/10056).
     server_headers = [f"{p.final_url} : {p.headers['server']}" for p in checked if "server" in p.headers]

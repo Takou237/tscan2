@@ -46,6 +46,7 @@ from tscan_core.scan.detections import (
     csrf,
     directory_listing,
     header_injection,
+    header_notset,
     modern_web_app,
     open_redirect,
     path_traversal,
@@ -115,6 +116,11 @@ _PRECISE_RECHECK_RULE_IDS = frozenset(
         # plus sur la page), donc un signal de faux positif exploitable.
         "RULE-PERMISSIONS-NOTSET-001",
         "RULE-MODERN-APP-001",
+        # En-têtes absents (suite P7) : constat par page avec probe_info
+        # header_absent rejouable — même sémantique de contradiction.
+        "RULE-HSTS-NOTSET-001",
+        "RULE-XCTO-NOTSET-001",
+        "RULE-XFO-NOTSET-001",
     }
 )
 
@@ -697,6 +703,18 @@ def _run_modern_web_app(
     }
 
 
+def _run_header_notset(
+    config: ScanConfig, client, observations: dict, cache: dict, on_event=None
+) -> set[str]:
+    root = _fresh_root(config, client, cache, on_event)
+    return {
+        _match_key(r.matched_at)
+        for r in header_notset.run(
+            config, client, root, observations, pages={}, on_event=on_event
+        )
+    }
+
+
 def _run_tls(config: ScanConfig, client, observations: dict, cache: dict) -> set[str]:
     del client, observations, cache
     try:
@@ -723,6 +741,9 @@ _CODE_RUNNERS = {
     "RULE-WEAK-HASH-001": _run_weak_hash,
     "RULE-PERMISSIONS-NOTSET-001": _run_permissions_policy,
     "RULE-MODERN-APP-001": _run_modern_web_app,
+    "RULE-HSTS-NOTSET-001": _run_header_notset,
+    "RULE-XCTO-NOTSET-001": _run_header_notset,
+    "RULE-XFO-NOTSET-001": _run_header_notset,
 }
 
 
