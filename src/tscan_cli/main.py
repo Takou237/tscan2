@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import getpass
 import json
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -31,6 +32,28 @@ from tscan_core.scan.blocking import detect_target_blocking
 from tscan_core.scan.config import ScanConfig, ScanConfigError
 from tscan_core.scan.orchestrator import run_recon_scan
 from tscan_core.status import correct_status_manually
+
+
+def _force_utf8_stdio() -> None:
+    """Force l'encodage UTF-8 de stdout/stderr.
+
+    Sous Windows, la console et les sorties redirigées (pipe, fichier) sont
+    en cp1252 par défaut : tout accent français au-delà du jeu cp1252
+    («\u00a0≤\u00a0», «\u00a0→\u00a0», emoji...) fait planter la CLI avec
+    UnicodeEncodeError au milieu d'une commande (ES-05 : journalisation
+    fiable). Le forçage est silencieux si le flux ne le permet pas.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8")
+        except (ValueError, OSError):
+            pass
+
+
+_force_utf8_stdio()
 
 app = typer.Typer(
     name="tscan",
