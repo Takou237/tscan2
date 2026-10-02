@@ -233,8 +233,11 @@ Réalisation de la décision 10.3 :
    du scan ; la réalisation ajoute un flux d'événements temps réel (`ScanProgressEvent` ->
    `RequestHistory` -> GUI, journal mémoire par scan), parité avec l'onglet History de
    ZAP, sans table dédiée en base.
-5. **Empaquetage non réalisé.** PyInstaller + Inno Setup (S11) restent à livrer ; l'aspect
-   « installation » de l'architecture est le seul point en attente.
+5. **Empaquetage réalisé, recette d'installation à valider.** PyInstaller + Inno Setup
+   ont produit le 28/09/2026 deux exécutables one-file (`tscan.exe`, `tscan-gui.exe`) et
+   l'installeur `tscan-0.1.0-setup.exe` ; les règles `rules/` et `knowledge/` sont
+   embarquées via `tscan_core.app_paths.data_root()` (sys._MEIPASS), l'installation se
+   fait par utilisateur sans élévation. Reste la recette sur machine « propre ».
 
 ## 7. Sécurité architecturale
 
@@ -263,7 +266,7 @@ Traduction structurelle des exigences du chapitre 9 du cahier des charges :
 
 ## 8. Tests et qualité
 
-**322 tests pytest verts** (suite complète exécutée le 21/09/2026, 3 min 28 s), `ruff`
+**348 tests pytest verts** (suite complète exécutée le 02/10/2026, 3 min 52 s), `ruff`
 propre sur `src/` et `tests/`. Organisation :
 
 - **Par module du cœur** : parseurs (`test_importer_*.py`), corrélation/matching
@@ -287,13 +290,18 @@ propre sur `src/` et `tests/`. Organisation :
 - **Régressions de données** : `test_migration.py` (migration idempotente des anciens
   « Confirmée » moteur), `test_offline.py` (fonctionnement hors-ligne).
 
-**Dette technique connue** : quelques scripts d'analyse personnels non versionnés à la
-racine et dans `tests/` (à nettoyer) ; l'empaquetage ; la mesure précision/rappel sur
-corpus étiqueté (perspective post-stage, cf. rapport de stage ch. 13).
+**Dette technique connue** : le paquet `src/tscan_core/detection/` est vide (héritage
+d'un ancien découpage, à supprimer) ; le typage n'est pas outillé (`py.typed` absent,
+aucune configuration mypy — 8 `# type: ignore[attr-defined]` sur du monkey-patching
+d'`httpx.Client`) ; la configuration ruff ne fixe que `line-length` et `src` (les
+suppressions `# noqa: BLE001` / `S110` du code visent des règles non activées) ; la
+mesure précision/rappel sur corpus étiqueté reste à faire (perspective post-stage, cf.
+rapport de stage ch. 13).
 
 ---
 
 *Document généré le 21/09/2026 à partir de la lecture du code (`src/tscan_core`,
 `src/tscan_cli`, `src/tscan_gui`, `rules/`, `knowledge/`) et de l'exécution vérifiée de
-la suite de tests. Références RF-xx / ES-xx / RNF-xx : cahier des charges, chapitres 6, 7
+la suite de tests, puis mis à jour le 02/10/2026 (empaquetage, compte de tests, dette
+technique). Références RF-xx / ES-xx / RNF-xx : cahier des charges, chapitres 6, 7
 et 9.*

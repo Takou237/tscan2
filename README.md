@@ -10,7 +10,7 @@ de réduire les faux positifs par corrélation et validation active non destruct
 
 ## Statut du projet
 
-✅ **Développement terminé — semaines 1 à 11 livrées et vérifiées (empaquetage PyInstaller + installeur Inno Setup produits le 28/09/2026) ; travaux de fin de stage : parité OWASP ZAP, démarche anti-faux-positifs complète (sentinelle anti soft-404 généralisée, analyse différentielle, re-vérification précise des en-têtes absents), publication sur GitHub, guide utilisateur, rapport de stage. État vérifié au 02/10/2026 : 343 tests verts, ruff propre, 54 règles YAML. Reste (logistique ANTIC) : tests manuels GUI UC1→UC5, installation testée sur machine « propre », répétition de la démonstration.**
+✅ **Développement terminé — semaines 1 à 11 livrées et vérifiées (empaquetage PyInstaller + installeur Inno Setup produits le 28/09/2026) ; travaux de fin de stage : parité OWASP ZAP, démarche anti-faux-positifs complète (sentinelle anti soft-404 généralisée, analyse différentielle, re-vérification précise des en-têtes absents), publication sur GitHub, guide utilisateur, rapport de stage. État vérifié au 02/10/2026 : 348 tests verts, ruff propre, 54 règles YAML. Reste (logistique ANTIC) : tests manuels GUI UC1→UC5, installation testée sur machine « propre », répétition de la démonstration.**
 
 Le cahier des charges complet (contexte, objectifs, étude de l'existant, besoins,
 architecture, technologies, planning) se trouve dans `docs/cahier_des_charges.pdf`.
@@ -96,7 +96,7 @@ l'exécutable empaqueté.
 
 ## État de la suite de tests (02/10/2026)
 
-**343 tests pytest verts** (exécutés intégralement le 02/10/2026, 3 min 35 s), `ruff` propre sur `src/` et `tests/`, audit des dépendances ES-12 vert. Les tests couvrent les parseurs d'import, la corrélation, le scoring, les règles, les détections (actives et passives), la machine anti-faux-positifs (sentinelle, analyse différentielle, tests qui forcent le faux positif), la confirmation/re-vérification, le reporting, la migration de données, la GUI (logique viewmodel) et les intégrations de bout en bout (scénarios A et B).
+**348 tests pytest verts** (exécutés intégralement le 02/10/2026, 3 min 52 s), `ruff` propre sur `src/` et `tests/`, audit des dépendances ES-12 vert. Les tests couvrent les parseurs d'import, la corrélation, le scoring, les règles, les détections (actives et passives), la machine anti-faux-positifs (sentinelle, analyse différentielle, tests qui forcent le faux positif), la confirmation/re-vérification, le reporting, la migration de données, la GUI (logique viewmodel) et les intégrations de bout en bout (scénarios A et B).
 
 ## Correctifs et ajouts confirmés (début semaine 11, 28/08/2026)
 
@@ -164,8 +164,9 @@ docs/               Documentation du projet
 | [`docs/architecture.md`](docs/architecture.md) | **Architecture technique (version réalisée)** : couches, modèle de données, flux, découplage moteur/règles/connaissances, écarts vs prévisionnel |
 | `docs/checklist_projet.md` | Avancement réel semaine par semaine (source de vérité) |
 | `docs/cahier_des_charges.pdf` | Cahier des charges complet (besoins, architecture, exigences) |
-| `docs/rapport_de_stage.tex` | Rapport de stage (LaTeX, compilable sur Overleaf/pdfLaTeX) |
-| `../documentation/guide_test_manuel_gui.md` | Procédure de test manuel pas à pas de la GUI (UC1→UC5) |
+| [`docs/rapport_de_stage.tex`](docs/rapport_de_stage.tex) | Rapport de stage (LaTeX, compilable sur Overleaf/pdfLaTeX) |
+| [`documentation/guide_test_manuel_gui.md`](documentation/guide_test_manuel_gui.md) | Procédure de test manuel pas à pas de la GUI (UC1→UC5), résultats attendus et tableau de verdict |
+| [`CHANGELOG.md`](CHANGELOG.md) | Historique des modifications par jalon de stage |
 
 ## Installation (développement)
 

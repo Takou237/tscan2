@@ -334,7 +334,7 @@ avancement réel / planning. Le README reflète l'état réel du dépôt à chaq
 \section{Assurance qualité}
 
 \begin{itemize}[leftmargin=1.5em]
-  \item \textbf{343 tests automatisés} (pytest), tous verts ;
+  \item \textbf{348 tests automatisés} (pytest), tous verts ;
   \item \textbf{ruff} (linting) propre sur \code{src/}, \code{tests/} et \code{rules/} ;
   \item \textbf{1 test automatisé minimum par module critique} ;
   \item audit des dépendances (\code{pip-audit} via \code{scripts/audit\_deps.py}, ES-12) ;
@@ -373,7 +373,7 @@ src/
   tscan_gui/        Application desktop (PySide6)
 rules/              54 règles de détection versionnées (YAML)
 knowledge/          Technologies, alias CPE, référence CWE, signatures de faux positifs
-tests/              343 tests pytest + labo local (lab_server.py) + fixtures réelles
+tests/              348 tests pytest + labo local (lab_server.py) + fixtures réelles
 docs/               Cahier des charges (PDF), checklist projet, rapport de stage
 \end{verbatim}
 
@@ -716,7 +716,7 @@ commencé à \textbf{filtrer les connexions du scanner} en cours de scan (WAF an
 comportement documenté au chapitre 10. Ces limites sont méthodologiquement significatives :
 \textbf{les deux outils sont sujets au même blocage}, ce qui relativise l'écart constaté.
 
-\textbf{Indicateurs qualité} : 343 tests verts, ruff propre, un test minimum par module
+\textbf{Indicateurs qualité} : 348 tests verts, ruff propre, un test minimum par module
 critique, migration de données vérifiée sur la base réelle. L'effet des correctifs
 anti-faux-positifs de la semaine 12 est mesuré en 9.4.
 
@@ -920,7 +920,7 @@ des charges) :
 
 \textbf{Techniques} : architecture logicielle (découplage cœur/CLI/GUI, modèle pivot),
 sécurité web appliquée (OWASP Top 10 en pratique, charges bénignes, non-destructivité),
-qualité logicielle (343 tests, linting, migrations), Python avancé (SQLAlchemy, httpx,
+qualité logicielle (348 tests, linting, migrations), Python avancé (SQLAlchemy, httpx,
 PySide6, Typer), diagnostic réseau/TLS (DNS, TCP, TLS, encodages de transport).
 
 \textbf{Méthodologiques} : gestion de projet MVP, documentation vivante (checklist + README
@@ -951,7 +951,7 @@ d'analyse, de corrélation et de validation de vulnérabilités web : import de 
 scanners, 54 règles YAML versionnées, 27 familles de détection non destructives, scoring
 explicable, ré-observation avec corroboration mesurée (\textbf{76,9~\%} sur le cas
 d'étude), reporting HTML/Markdown, CLI complète et application desktop --- le tout adossé
-à une checklist de sécurité transverse (ES-01$\rightarrow$ES-12) et à \textbf{343 tests
+à une checklist de sécurité transverse (ES-01$\rightarrow$ES-12) et à \textbf{348 tests
 automatisés}.
 
 Au-delà de l'outil, le stage démontre qu'une \textbf{démarche d'ingénierie rigoureuse} ---

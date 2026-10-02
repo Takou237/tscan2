@@ -163,7 +163,7 @@ avancement réel / planning. Le README reflète l'état réel du dépôt à chaq
 
 ### 6.2 Assurance qualité
 
-- **322 tests automatisés** (pytest), tous verts ;
+- **348 tests automatisés** (pytest), tous verts (322 au 21/09/2026, 208 au 21/08/2026) ;
 - **ruff** (linting) propre sur `src/`, `tests/` et `rules/` ;
 - **1 test automatisé minimum par module critique** ;
 - audit des dépendances (`pip-audit` via `scripts/audit_deps.py`, ES-12) ;
@@ -192,7 +192,7 @@ src/
   tscan_gui/        Application desktop (PySide6)
 rules/              54 règles de détection versionnées (YAML)
 knowledge/          Technologies, alias CPE, référence CWE, signatures de faux positifs
-tests/              322 tests pytest + labo local (lab_server.py) + fixtures réelles
+tests/              348 tests pytest + labo local (lab_server.py) + fixtures réelles
 docs/               Cahier des charges (PDF), checklist projet, rapport de stage
 ```
 
@@ -468,7 +468,7 @@ des ressources que le moteur Tscan ne crawle volontairement pas (fichiers images
 documenté au chapitre 10. Ces limites sont méthodologiquement significatives : **les deux
 outils sont sujets au même blocage**, ce qui relativise l'écart constaté.
 
-**Indicateurs qualité** : 322 tests verts, ruff propre, un test minimum par module critique,
+**Indicateurs qualité** : 348 tests verts, ruff propre, un test minimum par module critique,
 migration de données vérifiée sur la base réelle. L'effet des correctifs anti-faux-positifs
 de la semaine 12 est mesuré en 9.4.
 
@@ -586,8 +586,12 @@ des charges) :
    le moteur le signale mais ne le contourne pas ;
 4. **Le moteur ne confirme pas** : « Confirmée » reste un verdict d'analyste — la
    corroboration apporte une indication, pas une preuve ;
-5. **Empaquetage** : l'exécutable Windows (PyInstaller/Inno Setup) reste à produire (S11) ;
-6. **Tests manuels GUI UC1→UC5** : à exécuter sur poste avec affichage ;
+5. **Empaquetage** : l'exécutable Windows et l'installeur ont été produits le
+   28/09/2026 (`tscan.exe`, `tscan-gui.exe`, `tscan-0.1.0-setup.exe`) ; seule la
+   recette d'installation sur machine « propre » reste à effectuer ;
+6. **Tests manuels GUI UC1→UC5** : à exécuter sur poste avec affichage — la
+   procédure pas à pas est rédigée (`documentation/guide_test_manuel_gui.md`), la
+   recette reste à réaliser ;
 7. **Re-vérification limitée** : elle ne re-vérifie pas les alertes ZAP actives dont la
    logique de détection n'est pas implémentée côté Tscan (ex. injection dans un
    formulaire soumis) ;
@@ -603,7 +607,8 @@ des charges) :
 
 ## 13. Perspectives post-stage
 
-- **Empaquetage final** : exécutable Windows + installeur (S11 en cours) ;
+- **Installation sur machine « propre »** : tester l'installeur Inno Setup généré
+  (chemins, raccourcis, ajout au PATH, désinstallation) ;
 - **Élargissement de la parité ZAP** : normalisation des scopes HTTP, alertes de
   session plus fines, alertes de type « Content-Security-Policy » sur les sous-ressources ;
 - **Corroboration inversée** : utiliser la ré-observation pour **prioriser** les alertes
@@ -630,7 +635,7 @@ des charges) :
 
 **Techniques** : architecture logicielle (découplage cœur/CLI/GUI, modèle pivot), sécurité
 web appliquée (OWASP Top 10 en pratique, charges bénignes, non-destructivité), qualité
-logicielle (322 tests, linting, migrations), Python avancé (SQLAlchemy, httpx, PySide6,
+logicielle (348 tests, linting, migrations), Python avancé (SQLAlchemy, httpx, PySide6,
 Typer), diagnostic réseau/TLS (DNS, TCP, TLS, encodages de transport).
 
 **Méthodologiques** : gestion de projet MVP, documentation vivante (checklist + README
@@ -662,7 +667,7 @@ d'analyse, de corrélation et de validation de vulnérabilités web : import de 
 scanners, 54 règles YAML versionnées, 27 familles de détection non destructives, scoring
 explicable, ré-observation avec corroboration mesurée (**76,9 %** sur le cas d'étude),
 reporting HTML/Markdown, CLI complète et application desktop — le tout adossé à une
-checklist de sécurité transverse (ES-01→ES-12) et à **322 tests automatisés**.
+checklist de sécurité transverse (ES-01→ES-12) et à **348 tests automatisés**.
 
 Au-delà de l'outil, le stage démontre qu'une **démarche d'ingénierie rigoureuse** — cahier
 des charges, MVP incrémental, validation expérimentale, limites assumées — peut produire,
