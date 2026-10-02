@@ -1,0 +1,1037 @@
+% ======================================================================
+% RAPPORT DE STAGE — TSCAN
+% Conversion LaTeX du rapport Markdown (docs/rapport_de_stage.md)
+% Compilation : pdflatex rapport_de_stage.tex  (x2 pour la table des matières)
+% Encodage : UTF-8 — Moteur recommandé : pdflatex (ou xelatex)
+% ======================================================================
+\documentclass[11pt,a4paper]{report}
+
+% ---------------------------------------------------------------------
+% ENCODAGE ET LANGUE
+% ---------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+
+% ---------------------------------------------------------------------
+% MISE EN PAGE
+% ---------------------------------------------------------------------
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ---------------------------------------------------------------------
+% PACKAGES UTILES
+% ---------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage{booktabs}          % tableaux professionnels
+\usepackage{longtable}         % tableaux multi-pages
+\usepackage{array}
+\usepackage{enumitem}          % contrôle des listes
+\usepackage{xcolor}
+\usepackage{tcolorbox}         % encadrés
+\tcbuselibrary{breakable}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,calc,babel}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+
+% ---------------------------------------------------------------------
+% EN-TÊTES ET PIEDS DE PAGE
+% ---------------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% ---------------------------------------------------------------------
+% SECTION : ESPACEMENTS ET COULEURS
+% ---------------------------------------------------------------------
+\definecolor{anticblue}{RGB}{0,60,113}
+\definecolor{tscangreen}{RGB}{0,105,92}
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{anticblue}}
+  {\filleft\Large Chapitre \thechapter}{1ex}{\titlerule[1.5pt]\vspace{1ex}\filright}
+\titlespacing*{\chapter}{0pt}{20pt}{30pt}
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{anticblue}}{\thesection}{0.8em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}{\thesubsection}{0.8em}{}
+
+% ---------------------------------------------------------------------
+% COMMANDES UTILES
+% ---------------------------------------------------------------------
+\newcommand{\tscan}{\textsc{Tscan}}
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[#1]}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+% Boîte "À COMPLÉTER" bien visible
+\newtcolorbox{acompleter}[1][]{%
+  colback=red!4!white, colframe=red!60!black, breakable,
+  title={\textbf{À compléter}}, #1
+}
+
+% Boîte "À retenir"
+\newtcolorbox{aretenir}[1][]{%
+  colback=tscangreen!5!white, colframe=tscangreen, breakable,
+  title={\textbf{Point clé}}, #1
+}
+
+% =====================================================================
+\begin{document}
+
+% =====================================================================
+% PAGE DE GARDE
+% =====================================================================
+\begin{titlepage}
+\begin{center}
+
+{\Large \textbf{RÉPUBLIQUE DU CAMEROUN}}\\
+{\small Paix -- Travail -- Patrie}\\[0.3cm]
+{\normalsize \textbf{AGENCE NATIONALE DES TECHNOLOGIES DE L'INFORMATION\\ ET DE LA COMMUNICATION (ANTIC)}}\\[1.2cm]
+
+\rule{\textwidth}{1.5pt}\\[0.4cm]
+{\Huge \bfseries Rapport de stage}\\[0.6cm]
+{\LARGE \bfseries \textsc{Tscan}}\\[0.5cm]
+{\large Plateforme d'analyse, de corrélation et de validation de vulnérabilités}\\[0.4cm]
+\rule{\textwidth}{1.5pt}\\[1.5cm]
+
+\begin{tabular}{rl}
+  \textbf{Stagiaire :} & KEN DANIEL Takou \\[0.2cm]
+  \textbf{Formation :} & Cycle de formation en génie civil \\[0.2cm]
+  \textbf{Organisme d'accueil :} & ANTIC --- Agence Nationale des Technologies \\ 
+   & de l'Information et de la Communication \\[0.2cm]
+  \textbf{Période :} & \todo{20/07/2026 $\rightarrow$ 18/09/2026} \\[0.2cm]
+  \textbf{Encadrant :} & \todo{Nom de l'encadrant} \\[0.2cm]
+  \textbf{Service d'accueil :} & \todo{Département / équipe} \\
+\end{tabular}\\[1.5cm]
+
+\begin{tcolorbox}[colback=anticblue!4!white, colframe=anticblue, width=0.85\textwidth]
+\centering \textit{« Réduire le temps de tri des alertes de sécurité et améliorer la fiabilité des constats, en croisant les résultats des scanners externes avec un moteur de validation interne. »}
+\end{tcolorbox}
+
+\vfill
+{\large Version 1.0 --- \today}
+\end{center}
+\end{titlepage}
+
+% =====================================================================
+% PAGE DE REMERCIEMENTS (À PERSONNALISER)
+% =====================================================================
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+
+Je tiens à remercier \todo{Nom de l'encadrant}, mon encadrant de stage, pour sa
+disponibilité, ses orientations et la confiance accordée tout au long de ce projet. Mes
+remerciements vont également à l'ensemble de l'équipe du \todo{département d'accueil} de
+l'ANTIC pour la qualité de l'accueil et les conditions de travail offertes.
+
+Enfin, je remercie la direction de ma formation en génie civil pour avoir autorisé et
+encadré ce stage, ainsi que toutes les personnes qui, de près ou de loin, ont contribué à
+la réussite de ce travail.
+
+% =====================================================================
+% TABLE DES MATIÈRES
+% =====================================================================
+\tableofcontents
+
+% =====================================================================
+% SYNTHÈSE (RÉSUMÉ)
+% =====================================================================
+\chapter*{Synthèse}
+\addcontentsline{toc}{chapter}{Synthèse}
+
+Ce rapport présente le travail réalisé au cours de mon stage à l'ANTIC, consacré au
+développement de \tscan{} : une plateforme d'analyse, de corrélation et de validation de
+vulnérabilités de sécurité pour applications web. Le stage couvre l'intégralité du cycle
+produit --- étude de l'existant, cahier des charges, architecture, développement, tests,
+validation expérimentale --- sur la base d'un cahier des charges de 16 chapitres et d'un
+planning en 11 semaines.
+
+La particularité du projet tient à son \textbf{double enjeu} : construire un outil
+opérationnel (import multi-formats, scan actif non destructif, corrélation, reporting), et
+répondre à un problème concret des équipes de sécurité : \textbf{les scanners produisent
+beaucoup de faux positifs}, et la fiabilisation de leurs résultats exige des méthodes
+structurées. \tscan{} attaque ce problème par trois leviers : le \textbf{pré-filtrage
+contextuel}, la \textbf{corrélation multi-sources} et la \textbf{validation active non
+destructive} (ré-observation).
+
+Le présent document décrit les choix techniques, les livrables, la validation
+expérimentale mesurée sur cibles réelles et autorisées, ainsi que les limites assumées du
+produit au terme du stage.
+
+% =====================================================================
+% LISTE DES FIGURES ET TABLEAUX (optionnel mais recommandé)
+% =====================================================================
+\cleardoublepage
+\addcontentsline{toc}{chapter}{Liste des figures et des tableaux}
+\listoffigures
+\listoftables
+
+% =====================================================================
+\chapter{Introduction}
+
+Ce rapport présente le travail réalisé au cours de mon stage à l'ANTIC, consacré au
+développement de \tscan{} : une plateforme d'analyse, de corrélation et de validation de
+vulnérabilités de sécurité pour applications web. Le stage couvre l'intégralité du cycle
+produit --- étude de l'existant, cahier des charges, architecture, développement, tests,
+validation expérimentale --- sur la base d'un cahier des charges de 16 chapitres et d'un
+planning en 11 semaines.
+
+La particularité du projet tient à son \textbf{double enjeu} : construire un outil
+opérationnel (import multi-formats, scan actif non destructif, corrélation, reporting), et
+répondre à un problème concret des équipes de sécurité : \textbf{les scanners produisent
+beaucoup de faux positifs}, et la fiabilisation de leurs résultats exige des méthodes
+structurées. \tscan{} attaque ce problème par trois leviers : le \textbf{pré-filtrage
+contextuel}, la \textbf{corrélation multi-sources} et la \textbf{validation active non
+destructive} (ré-observation).
+
+Le présent document décrit les choix techniques, les livrables, la validation
+expérimentale mesurée sur cibles réelles et autorisées, ainsi que les limites assumées du
+produit au terme du stage.
+
+% =====================================================================
+\chapter{Organisation d'accueil}
+
+\section{L'ANTIC}
+
+L'\href{https://www.antic.cm}{ANTIC} (Agence Nationale des Technologies de l'Information
+et de la Communication) est l'agence gouvernementale camerounaise chargée de la promotion
+et de la sécurisation des technologies de l'information. Ses missions couvrent notamment
+l'administration des ressources Internet du pays (domaine national «~.cm~», infrastructure
+DNS et registre), le développement des usages numériques et la cyberdéfense nationale. Elle
+héberge le \textbf{CERT/CCTAL}, l'équipe de réponse aux incidents de sécurité informatique
+du Cameroun.
+
+\section{Mon rôle et mon encadrement}
+
+J'ai été accueilli au sein du \todo{département/équipe} et encadré par
+\todo{Nom de l'encadrant}. Mon travail a suivi la logique MVP (Minimum Viable Product)
+définie au chapitre 5 du cahier des charges : livrer d'abord le cœur du produit, puis
+étendre par blocs hebdomadaires testés et vérifiés. Les points d'avancement hebdomadaires
+ont été consignés dans une checklist projet (\code{docs/checklist\_projet.md}) comparant
+avancement réel et planning, et le README reflète à tout instant l'état réel du dépôt.
+
+% =====================================================================
+\chapter{Contexte et problématique}
+
+\section{Le contexte}
+
+Les organisations sont soumises à une pression croissante : surface d'attaque web étendue,
+composants tiers omniprésents (CMS, bibliothèques JavaScript), exigences de conformité.
+Les scanners de vulnérabilités (Nuclei, OWASP ZAP, Nessus, OpenVAS) sont devenus
+indispensables, mais leur sortie brute présente trois faiblesses :
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{formats hétérogènes} : chaque outil a son modèle de rapport, rendant
+        difficile une vue consolidée ;
+  \item \textbf{faux positifs} : une alerte détectée n'est pas toujours une vulnérabilité
+        réelle --- le filtrage manuel des alertes est le premier poste de charge des
+        analystes ;
+  \item \textbf{confiance non explicable} : un score 5/10 sans justification n'aide pas à
+        prioriser.
+\end{itemize}
+
+\section{La problématique}
+
+\begin{tcolorbox}[colback=anticblue!4!white, colframe=anticblue,
+                  title={\textbf{Problématique du stage}}]
+Comment réduire le temps de tri des alertes et améliorer la fiabilité des constats, en
+cross-checkant les résultats des scanners externes avec un moteur de validation interne ?
+\end{tcolorbox}
+
+\tscan{} répond par un modèle pivot unique (\code{Finding}), un pré-filtrage contextuel,
+une corrélation multi-sources avec scoring de confiance \textbf{explicable}, et une
+\textbf{ré-observation active} : chaque constat importé peut être re-validé par une seconde
+observation non destructive exécutée par le moteur interne.
+
+% =====================================================================
+\chapter{Objectifs et périmètre du stage}
+
+\section{Objectif général}
+
+Concevoir et développer \tscan{}, plateforme d'analyse, de corrélation et de validation de
+vulnérabilités web, conformément au cahier des charges (16 chapitres) et à son MVP
+(chapitre 5), avec un niveau de qualité industrialisable : tests automatisés, style
+vérifié, traçabilité des décisions (checklist + README reflétant l'état réel).
+
+\section{Objectifs spécifiques (par bloc hebdomadaire)}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{@{}cp{9.8cm}p{3.2cm}@{}}
+\toprule
+\textbf{Bloc} & \textbf{Objectif} & \textbf{État final} \\
+\midrule
+S1--S2 & Étude de l'existant, cahier des charges, architecture prévisionnelle & Terminé \\
+S3 & Squelette technique (venv, pyproject, ruff, pytest, modèles, SQLite, CLI Typer) & Terminé \\
+S4 & Import Nuclei/ZAP vers le modèle pivot \code{Finding} & Terminé \\
+S5--S6 & Corrélation, scoring explicable, statuts, historique --- scénario A en CLI & Terminé \\
++ & Bloc connaissances CVE/NVD + CISA KEV + références CWE + alias CPE & Terminé \\
+S7 & Reconnaissance (statut, TLS, technologies), périmètre, journalisation + détections passives & Terminé \\
+S8 & Détections actives non destructives (XSS, CSRF, SQLi error-based\ldots) + import Nessus/OpenVAS & Terminé \\
+S9 & Confirmation active RF-23 + reporting (HTML/Markdown) + scénario B & Terminé \\
+S10 & Application desktop PySide6 (liste filtrable, détail, correction, import/scan/rapport) & Terminé \\
+S11 & Durcissement, empaquetage, démonstration & Terminé \\
+\bottomrule
+\end{tabular}
+\caption{Objectifs hebdomadaires et état final.}
+\end{table}
+
+\section{Périmètre du MVP}
+
+Le MVP couvre l'import des formats \textbf{Nuclei (JSONL), OWASP ZAP (JSON),
+Nessus/OpenVAS (XML)}, la corrélation multi-sources sur cible commune, le scoring de
+confiance explicable, les statuts avec correction manuelle et historique, un \textbf{moteur
+de scan actif autorisé et non destructif}, la ré-observation (corroboration), le reporting
+HTML/Markdown, une CLI complète et une application desktop. \textbf{Hors périmètre} : PDF,
+SSRF/désérialisation (familles à risque, ES-04), gestion multi-utilisateurs,
+authentification applicative.
+
+% =====================================================================
+\chapter{Étude de l'existant}
+
+Avant le développement, une étude de l'existant a été conduite sur quatre axes :
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Scanners de vulnérabilités} : Nuclei (templating communautaire), OWASP ZAP
+        (proxy d'analyse avec scanner actif), Nessus/OpenVAS (scanners infra). Aucun ne
+        fait nativement de corrélation inter-outils avec fiabilisation.
+  \item \textbf{Plateformes d'agrégation} (modèle «~vuln management~») : se limitent
+        souvent à la consolidation, sans validation active.
+  \item \textbf{Sources de connaissances} : NVD/CVE, CISA KEV (catalogue des exploitations
+        avérées), CWE pour la classification des faiblesses.
+  \item \textbf{Formats de rapport} : JSONL (Nuclei), JSON (ZAP), XML \code{.nessus}
+        (Nessus/OpenVAS).
+\end{itemize}
+
+\begin{aretenir}
+Il existe des outils excellents à chaque étage, mais \textbf{aucun chaînon mature qui
+corrèle plusieurs sources sur une même cible, score la confiance de façon explicable, puis
+re-valide activement les constats importés}. C'est la niche que \tscan{} occupe.
+\end{aretenir}
+
+% =====================================================================
+\chapter{Choix méthodologiques}
+
+\section{Démarche MVP incrémentale}
+
+Le développement a suivi une logique MVP : chaque bloc hebdomadaire livre des
+fonctionnalités testées et vérifiées, consignées dans une checklist projet avec comparaison
+avancement réel / planning. Le README reflète l'état réel du dépôt à chaque instant.
+
+\section{Assurance qualité}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{343 tests automatisés} (pytest), tous verts ;
+  \item \textbf{ruff} (linting) propre sur \code{src/}, \code{tests/} et \code{rules/} ;
+  \item \textbf{1 test automatisé minimum par module critique} ;
+  \item audit des dépendances (\code{pip-audit} via \code{scripts/audit\_deps.py}, ES-12) ;
+  \item migration de données idempotente à l'initialisation de la base (RF-12).
+\end{itemize}
+
+\section{Pile technologique}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{@{}llp{7.5cm}@{}}
+\toprule
+\textbf{Couche} & \textbf{Choix} & \textbf{Justification} \\
+\midrule
+Langage & Python $\geq$ 3.11 & Écosystème sécurité, httpx, rapidité de développement \\
+Bibliothèque cœur & modules \code{tscan\_core} & Partagée CLI + GUI, testable sans écran \\
+CLI & Typer & Complétion, sous-commandes, ergonomie \\
+Desktop & PySide6 & Qt pour Python, LGPL, opérations longues en QThread \\
+Persistance & SQLite + SQLAlchemy & Base fichier unique, migrations additives, zéro infra \\
+HTTP & httpx & Client borné (timeout, redirections limitées), brotli/gzip \\
+Règles & YAML versionnés & Aucune règle codée en dur, chargeur dynamique \\
+Tests & pytest + serveur labo local & Intégration sans réseau externe \\
+Empaquetage & PyInstaller + Inno Setup & Exécutable Windows (S11) \\
+\bottomrule
+\end{tabular}
+\caption{Pile technologique retenue.}
+\end{table}
+
+\section{Structure du dépôt}
+
+\begin{verbatim}
+src/
+  tscan_core/       Bibliothèque cœur (import, corrélation, détection, reporting, scan)
+  tscan_cli/        Interface en ligne de commande (Typer)
+  tscan_gui/        Application desktop (PySide6)
+rules/              54 règles de détection versionnées (YAML)
+knowledge/          Technologies, alias CPE, référence CWE, signatures de faux positifs
+tests/              343 tests pytest + labo local (lab_server.py) + fixtures réelles
+docs/               Cahier des charges (PDF), checklist projet, rapport de stage
+\end{verbatim}
+
+% =====================================================================
+\chapter{Architecture technique}
+
+\section{Vue d'ensemble}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[
+  node distance=0.55cm and 0.4cm,
+  layer/.style={rectangle, rounded corners=3pt, draw=anticblue, thick,
+                fill=anticblue!6, align=center, inner sep=6pt},
+  core/.style={rectangle, rounded corners=3pt, draw=tscangreen, thick,
+               fill=tscangreen!6, align=center, inner sep=6pt},
+  data/.style={rectangle, rounded corners=3pt, draw=black!60, thick,
+               fill=black!4, align=center, inner sep=6pt},
+  arr/.style={-{Stealth[length=3mm]}, thick, black!70}
+]
+
+% Couche présentation
+\node[layer, text width=11.5cm] (gui) {\textbf{tscan\_gui (PySide6)}\\
+  MainWindow · FilterBar · FindingsTable · FindingDetailPanel\\
+  Dialogs · Workers (QThread)};
+\node[layer, below=of gui, text width=11.5cm] (cli) {\textbf{tscan\_cli (Typer)}\\
+  Commandes : import · scan · correlate · report · correct · lookup-cve · update-kev};
+
+% Coeur
+\node[core, below=of cli, text width=11.5cm] (core) {\textbf{tscan\_core (bibliothèque cœur)}\\
+  modèle pivot Finding $\rightarrow$ pré-filtrage $\rightarrow$ corrélation $\rightarrow$
+  scoring $\rightarrow$ statuts/historique $\rightarrow$ reporting HTML/MD\\[2pt]
+  \begin{tabular}{cc}
+    \begin{tabular}[t]{@{}l@{}}\textbf{Scan actif}\\ recon $\rightarrow$ règles\\
+      $\rightarrow$ ré-observation\end{tabular} &
+    \begin{tabular}[t]{@{}l@{}}\textbf{Base de connaissances}\\ NVD/CVE · KEV · CWE/CPE\\
+      (cache local, à la demande)\end{tabular}
+  \end{tabular}};
+
+% Importeurs
+\node[data, left=0.5cm of core.north west, anchor=north west, yshift=-1.2cm,
+      text width=2.6cm] (imports)
+  {\textbf{Importeurs}\\ Nuclei (JSONL)\\ ZAP (JSON)\\ Nessus/OpenVAS (XML)};
+
+% Stockage
+\node[data, below=of core, text width=11.5cm] (db)
+  {\textbf{SQLite} --- Scans · Findings · Evidence · StatusHistory · RequestHistory};
+
+% Flèches
+\draw[arr] (gui) -- (cli);
+\draw[arr] (cli) -- (core);
+\draw[arr] (imports) -- (core);
+\draw[arr] (core) -- (db);
+
+\end{tikzpicture}
+\caption{Architecture en couches de \tscan{}.}
+\end{figure}
+
+\section{Le modèle pivot \code{Finding}}
+
+Tout résultat --- importé ou produit par le scan actif --- converge vers un modèle unique :
+cible, emplacement (\code{matched\_at}), catégorie, titre, gravité, statut, score de
+confiance, preuves (\code{Evidence}), résultat brut conservé intact (ES-07), historique de
+statut (\code{StatusHistory}, ES-06). C'est ce pivot qui rend la corrélation et le scoring
+possibles entre sources hétérogènes.
+
+\section{Le moteur de règles (RF-13)}
+
+\textbf{Aucune règle codée en dur} : 54 règles YAML dans \code{rules/}, une par famille de
+détection, chargées dynamiquement. Chaque règle déclare identifiant, catégorie, gravité,
+conditions, méthode de validation, preuves attendues, recommandations sourcées
+(OWASP/CWE) et version. Le moteur de checks déclaratifs (section \code{checks:}) exécute
+les vérifications passives (\code{header\_absent}, \code{clickjacking},
+\code{path\_status}\ldots) ; les familles actives (XSS, SQLi\ldots) implémentent leurs
+sondes en Python, bornées par le module \code{probe.py}.
+
+\section{Le scan actif (RF-15--24, ES-01--05)}
+
+Le pipeline d'un scan actif autorisé :
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{Reconnaissance} (RF-15) : requête racine via client HTTP borné (timeout, 3
+        redirections max, pacing, rotation d'User-Agent), sonde TLS, fingerprinting
+        (RF-16) des technologies (PHP, WordPress, jQuery\ldots) via
+        \code{knowledge/technologies.yaml} ;
+  \item \textbf{Crawl} borné (profondeur et pages plafonnées, pages HTML uniquement pour
+        les sondes) ;
+  \item \textbf{Détections} selon le périmètre (\code{--tests}, RF-24) : 27 familles
+        couvrant les en-têtes de sécurité, clickjacking, BAC, composants vulnérables
+        (cache CVE local, ES-09), XSS réfléchi, CSRF, SQLi error-based, SSRF \emph{non
+        exécuté}, SSTI, fichiers sensibles, listing, CORS, TLS faible, cookies, WAF, CSP,
+        SRI, inclusions cross-domain, timestamps, en-têtes passifs parité ZAP\ldots ---
+        toutes \textbf{GET-only bénignes} (ES-03) ;
+  \item \textbf{Ré-observation} (RF-23) : re-vérification active de chaque constat
+        \code{Probable} ; un fait reproduit \textbf{renforce la confiance (plafonné
+        0,85)} sans jamais changer le statut ; un fait contredit place le constat en
+        \code{Potentiel faux positif} ; une sonde en échec laisse le constat tel quel
+        (ES-05). \textbf{Le moteur ne confirme jamais} : «~Confirmée~» (0,95) est un
+        verdict d'analyste (RF-12).
+\end{enumerate}
+
+\section{La corroboration (ré-observation des imports)}
+
+C'est la fonctionnalité au cœur de la problématique : réconcilier un \textbf{rapport
+importé} (par ex. ZAP) avec une \textbf{observation fraîche} du moteur interne :
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{passe 1 --- URL exacte} : catégorie + emplacement normalisé identiques ;
+  \item \textbf{passe 2 --- titre + catégorie + hôte} : même vulnérabilité, instance
+        différente (l'URL précise diffère, la faiblesse est la même sur le même hôte) ;
+  \item \textbf{table de synonymes FR$\leftrightarrow$EN} : les rapports ZAP en français
+        («~Incompatibilité de charset~») rejoignent les titres du moteur («~Charset
+        Mismatch~») ;
+  \item \textbf{catégorie «~other~» en joker} : un titre sans indice fiable est rapproché
+        par titre seul.
+\end{itemize}
+
+Le taux de corroboration mesuré sur le cas d'étude est présenté au chapitre 9.
+
+\section{La base de connaissances}
+
+Accès \textbf{à la demande, avec cache local} (aucun réseau pendant un scan, ES-09) :
+NVD/CVE (requête CVE par CVE), CISA KEV (catalogue des vulnérabilités exploitées,
+synchronisation complète via \code{tscan update-kev}), référence CWE minimale et table
+d'alias CPE vérifiée contre l'API NVD. Garde-fous d'intégrité (ES-11) : taille maximale des
+réponses + validation de format CVE avant intégration.
+
+% =====================================================================
+\chapter{Réalisation : du squelette au moteur de scan actif}
+
+\section{Semaines 3--4 : socle et modèle pivot}
+
+Mise en place du squelette (venv, \code{pyproject.toml}, ruff, pytest, modèles SQLAlchemy
+\code{Finding}/\code{Scan}/\code{Rule}/\code{Evidence}, base SQLite à migrations additives,
+CLI Typer). Puis le bloc import : parseurs \textbf{Nuclei (JSONL)} et \textbf{OWASP ZAP
+(JSON)} vers le modèle pivot, avec conservation du résultat brut (ES-07) et tests sur jeux
+de données réels.
+
+\section{Semaines 5--6 : corrélation, scoring, statuts}
+
+Pré-filtrage contextuel (RF-08), corrélation multi-sources (RF-09), moteur de scoring
+\textbf{explicable} (RF-10) --- chaque score dérive de la règle appliquée, du bonus
+multi-sources et de la re-vérification ---, consultation des preuves (RF-11), correction
+manuelle avec historique (RF-12). \textbf{Jalon : scénario A démontrable en CLI}.
+
+\section{Bloc connaissances (entre S6 et S7)}
+
+CVE/NVD à la demande avec cache local, CISA KEV, référence CWE, alias CPE --- commandes
+\code{tscan lookup-cve} et \code{tscan update-kev}.
+
+\section{Semaine 7 : reconnaissance et détections passives}
+
+Reconnaissance (client HTTP borné, TLS, fingerprinting), périmètre (cible autorisée,
+profondeur, durée, types de test --- RF-24/ES-01/02), journalisation systématique (ES-05),
+mode sécurisé par défaut (ES-03). Détections passives : en-têtes de sécurité manquants,
+clickjacking, composants vulnérables (correspondance version $\rightarrow$ CVE sur cache
+local), broken access control basique. Vérification sur \textbf{labo local} puis sur cible
+réelle autorisée.
+
+\section{Semaine 8 : détections actives et validation active}
+
+XSS réfléchi (charge bénigne à nonce), formulaires POST sans jeton CSRF, SQLi error-based
+(charges \code{' --}/\code{' \#} + marqueurs d'erreur), plus quatre familles
+complémentaires : fichiers sensibles, listing de répertoire, CORS permissif, TLS faible.
+Import Nessus/OpenVAS. \textbf{Confirmation active RF-23} puis \textbf{jalon de sécurité :
+scénario B} (reconnaissance $\rightarrow$ familles $\rightarrow$ validation $\rightarrow$
+scoring $\rightarrow$ rapport).
+
+\section{Semaine 9 : reporting et finalisation CLI}
+
+Générateur de rapport (résumé exécutif par gravité/statut + détails techniques, preuves,
+recommandations liées à des sources vérifiables OWASP/CWE --- RF-27/28/29), exports
+\textbf{HTML et Markdown}, commande \code{tscan report}, tests d'intégration bout en bout,
+revue d'architecture et revue de code. \textbf{Défaut corrigé} au passage : la
+désambiguïsation des règles partageant une catégorie (\code{scoring.\_resolve\_rule}).
+
+\section{Semaine 10 : application desktop}
+
+Fenêtre principale (liste filtrable statut/gravité/cible/recherche --- RF-11), vue détail
+(preuves, score, historique), correction manuelle avec raison consignée (ES-06),
+\code{ImportDialog}, \code{ScanDialog} (périmètre + autorisation), \code{ReportDialog}
+(HTML/Markdown). Opérations longues en \textbf{QThread} (RNF-03) : l'interface reste
+réactive. Logique de présentation testée sans écran (viewmodel). Un défaut de refactor
+(fichiers invalides) a été corrigé le 27/08/2026, la fenêtre a été ouverte et vérifiée en
+headless.
+
+\section{Semaine 11 : durcissement et correctifs}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Corrélation cohérente} : \code{run\_correlation} n'inclut plus les
+        résultats du scan actif ni les constats déjà Confirmés --- corréler ne rétrograde
+        plus une confirmation humaine ;
+  \item \textbf{Progression temps réel} : événements de progression émis par le moteur
+        (\code{tscan\_core.scan.progress}), panneau dans la GUI (barre + journal, comme
+        ZAP) ;
+  \item \textbf{Migration des données} : les anciens \code{Confirmée} auto-posés par le
+        moteur sont rétrogradés en \code{Probable} (idempotent, historique conservé) ;
+  \item \textbf{Faux positifs démontrés} : test d'intégration avec serveur qui expose puis
+        protège \code{/admin/} $\rightarrow$ constat en \code{Potentiel faux positif}.
+\end{itemize}
+
+\section{Travaux de fin de stage (septembre 2026)}
+
+Cette dernière période a concentré l'effort sur la \textbf{fiabilisation et la performance
+du moteur}, avec un cycle complet diagnostic $\rightarrow$ correctif $\rightarrow$
+validation.
+
+\subsection{Parité passive avec OWASP ZAP}
+
+Analyse croisée des alertes ZAP réelles et des constats du moteur : ajout d'un bundle de
+\textbf{16 règles passives} (\code{zap\_passive.py}) aux titres exacts ZAP (Content-Type
+Missing, Suspicious Comments, Modern Web Application, Cache-control, Retrieved from Cache,
+Permissions-Policy, X-Frame-Options, Server Header Leak, X-AspNet-Version,
+X-ChromeLogger-Data, X-Debug-Token, Reverse Tabnabbing, Weak Authentication,
+Hash/Base64/Source Code Disclosure) et d'une règle \textbf{XSS attribut} (RF : «~User
+Controllable HTML Element Attribute (Potential XSS)~», ZAP 10031). Câblage complet :
+famille \code{zap-passives}, 17 règles YAML, comptages de tests mis à jour.
+
+\subsection{Normalisation des catégories FR/EN}
+
+Extension de \code{normalize\_category} (mots-clés timestamp, content-type, modern web app,
+cache, server header, weak auth, base64/hash/source code disclosure, tabnabbing,
+x-aspnet/chromelogger/debug-token, auth request, session management) ; correctif du
+matching par mot entier pour les sigles courts (\code{rce} ne doit plus matcher
+«~r\textbf{esou}rce~») ; \textbf{table de synonymes FR$\leftrightarrow$EN} pour la passe
+titre de la corroboration. Correctif de régression : restauration du mapping Nessus
+(\code{cve-}, \code{.env}) via seuil de sous-chaîne $\geq$ 4.
+
+\subsection{Décompression Brotli --- cause racine d'un échec silencieux}
+
+Le client annonçait \code{Accept-Encoding: gzip, deflate, br} sans le paquet
+\code{brotli} : sur les serveurs compressant en Brotli (LiteSpeed), \textbf{tout le HTML
+analysé était un blob illisible} --- 0 détection passive, crawl bloqué à 1 page. Correctif :
+\code{brotli} installé et ajouté aux dépendances. Vérifié en conditions réelles : 39
+scripts, 4 formulaires et 250 liens soudain visibles sur une page WordPress ; détecteurs
+passant de 5 à 10 constats sur la seule page racine, incluant exactement les alertes ZAP
+manquantes à la corroboration.
+
+\subsection{Performance du scan actif (durée prévisible)}
+
+Le déblocage du crawl sur un CMS a fait exploser le volume de sondes : 17 pages
+$\times$ 58 paramètres $\times$ 2 charges $\approx$ \textbf{2\,000 requêtes} rien que pour
+la détection SQLi. Correctifs : fonction \code{probe\_fetch} (1 tentative, timeout 5~s)
+adoptée par les familles volumineuses ; plafonnement du nombre de paramètres sondés
+(\code{MAX\_PARAMS\_PER\_SCAN = 10}, paramètre de recherche toujours couvert) ; cadence
+réduite de la re-vérification ; arrêt anticipé des sondes big-redirect après échecs
+consécutifs. Volume SQLi ramené à $\sim$240 requêtes ; objectif de durée : $\sim$5--15 min.
+
+\subsection{Message d'erreur explicite en cas de blocage anti-bot}
+
+Lorsqu'une cible dropperait les connexions en silence (WAF/anti-bot), le message d'erreur
+distingue désormais ce cas d'une panne réseau et invite à réessayer plus tard --- retour
+utilisateur honnête, comme le prévoit l'ES-05.
+
+\subsection{Démarche anti-faux-positifs (sentinelle, signatures, cohérence)}
+
+Le faux positif «~panneau d'administration accessible sans authentification~» observé sur
+la cible réelle a servi de fil conducteur à un lot de fiabilisation du check
+\code{path\_status} (RF-20) :
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textit{Redirections vers une page de connexion.} La sonde suivait la redirection
+        \code{302 /wp-admin/ $\rightarrow$ /wp-login.php} et ne regardait que le statut
+        final (200) : le 200 de la page de connexion était lu comme celui du panneau. Le
+        verdict distingue désormais la destination (\code{Location}) et le trajet (URL
+        finale $\neq$ URL demandée).
+  \item \textit{Sentinelle anti «~soft-404~» (contrôle négatif).} Certains serveurs
+        répondent 200 avec une page générique pour n'importe quel chemin. Avant les sondes
+        de chemins, une requête vers un chemin inexistant aléatoire
+        (\code{/tscan-calib-<jeton>}) établit le «~bruit de fond~» du serveur ; une
+        réponse de sonde indiscernable du contrôle (réflexion du jeton, corps quasi
+        identique) ne produit pas de constat --- un 200 ne prouve plus rien. Le contrôle
+        est partagé entre détection (orchestrateur) et re-vérification (RF-23), où il
+        ajoute une note «~fait décisif non démontrable~» plutôt qu'une dégradation
+        silencieuse.
+  \item \textit{Signatures de faux positifs en connaissances.} Les marqueurs de pages
+        d'authentification (WordPress, Drupal, Django, pages francophones
+        \code{connexion}\ldots) ont quitté le code pour
+        \code{knowledge/fp\_signatures.yaml}, au même principe que les règles YAML et les
+        autres tables du dossier \code{knowledge/} : la table s'étend sans toucher au
+        code, avec des consignes anti-collisions documentées («~auth~» attraperait
+        \code{/author/john-doe}) et un test qui garantit qu'aucun marqueur ne capture une
+        ressource réellement sondée.
+\end{enumerate}
+
+Le compromis retenu, fidèle au RF-12 : en cas de doute, le moteur \textbf{s'abstient et
+documente} (note pour revue analytique) au lieu de conclure --- il ne classe jamais un
+constat en faux positif sur une simple incertitude de mesure.
+
+\subsection{Publication du projet}
+
+Le code a été publié sur GitHub (\code{github.com/Takou237/tscan2}), avec historique de
+commits, \code{.gitignore} protégeant les données de scan locales (bases \code{*.db}
+jamais versionnées) et exclusion des scripts d'analyse personnels contenant des chemins
+locaux.
+
+% =====================================================================
+\chapter{Validation expérimentale et mesure de corroboration}
+
+\section{Protocole}
+
+Pour mesurer la capacité du moteur à \textbf{reproduire les constats d'un scanner tiers},
+le protocole suivant a été appliqué à un site réel autorisé (boutique
+WordPress/WooCommerce) :
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{Import} d'un rapport ZAP réel (26 alertes) vers le modèle pivot ;
+  \item \textbf{Scan actif} \tscan{} sur la même cible (mêmes contraintes de bonté :
+        GET-only) ;
+  \item \textbf{Corroboration} : rapprochement import $\leftrightarrow$ moteur (passe URL
+        exacte puis passe titre+catégorie+hôte avec synonymes FR/EN) ;
+  \item \textbf{Mesure} du taux : corroborés / alertes importées.
+\end{enumerate}
+
+La cible a été scannée avec autorisation, à faible volume, en mode non destructif
+(ES-01/02/03). Les constats importés non reproduits sont classés \code{non reproductible}
+(revue analytique manuelle) ou \code{faux positif potentiel} lorsque la re-vérification
+contredit explicitement le fait.
+
+\section{Résultats}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Étape} & \textbf{Taux de corroboration} \\
+\midrule
+Avant le lot de détecteurs (situation initiale, 16/26) & 61,5~\% \\
+Après parité ZAP + normalisation FR/EN (17/26 hors ligne) & 65,4~\% \\
+Après correctif Brotli + scan actif complet (20/26) & \textbf{76,9~\%} \\
+\bottomrule
+\end{tabular}
+\caption{Taux de corroboration mesuré sur le cas d'étude.}
+\end{table}
+
+\textbf{Analyse des non-corroborés restants (6/26)} : pour la moitié, l'alerte ZAP portait
+sur des ressources que le moteur \tscan{} ne crawle volontairement pas (fichiers images
+\code{.png}/\code{.jpg} ciblés par ZAP pour l'absence de CSP) ; pour les autres, le site a
+commencé à \textbf{filtrer les connexions du scanner} en cours de scan (WAF anti-bot) ---
+comportement documenté au chapitre 10. Ces limites sont méthodologiquement significatives :
+\textbf{les deux outils sont sujets au même blocage}, ce qui relativise l'écart constaté.
+
+\textbf{Indicateurs qualité} : 343 tests verts, ruff propre, un test minimum par module
+critique, migration de données vérifiée sur la base réelle. L'effet des correctifs
+anti-faux-positifs de la semaine 12 est mesuré en 9.4.
+
+\section{Comparaison ZAP vs Tscan sur le cas d'étude}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{@{}p{10.5cm}c@{}}
+\toprule
+\textbf{Alerte ZAP importée} & \textbf{Tscan reproduit ?} \\
+\midrule
+En-têtes manquants (HSTS, XCTO, XFO, Permissions-Policy, CSP) & oui \\
+Cookies sans HttpOnly/SameSite, Cookie Poisoning & oui \\
+X-Powered-By divulgué, Timestamps Unix, Suspicious Comments, Modern Web App & oui \\
+Cache-control / Retrieved from Cache & oui \\
+Authentication / Session Management Identified & oui (règles passives parité ZAP) \\
+Sub Resource Integrity Missing, Cross-Domain JS & oui (après correctif Brotli) \\
+Absence de jetons Anti-CSRF & oui (formulaires POST analysés) \\
+CSP Not Set sur image PNG, charset, XSS attribut, Sensitive Info in URL & partiel / non \\
+\bottomrule
+\end{tabular}
+\caption{Correspondance alertes ZAP / détections \tscan{} sur le cas d'étude.}
+\end{table}
+
+\section{Effet des correctifs anti-faux-positifs (semaine 12)}
+
+Le lot de fiabilisation décrit en 8.9 (verdict sur la destination des redirections,
+sentinelle anti soft-404, signatures déclaratives) a été mesuré sur la cible d'étude en
+conditions réelles (17/09/2026, scan actif \#5, autorisation inchangée, même adresse IP) :
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{@{}p{5.6cm}p{4.6cm}p{4.6cm}@{}}
+\toprule
+\textbf{Observation} & \textbf{Campagnes avant correctifs} & \textbf{Scan \#5 (après correctifs)} \\
+\midrule
+Constat «~Panneau d'administration accessible sans authentification~» &
+produit à chaque campagne (302 /wp-admin/ $\rightarrow$ wp-login.php suivie, 200 final) &
+\textbf{0} \\
+Sentinelle anti soft-404 & absente & exécutée (1 requête), tracée dans \code{recon\_json} \\
+Avertissement «~cible bloque le scanner~» & absent (bilan présenté comme normal) &
+affiché (racine 403, crawl quasi vide) \\
+Potentiels faux positifs automatiques & au moins 1 (panneau admin) & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\caption{Effet des correctifs anti-faux-positifs mesuré sur la cible d'étude.}
+\end{table}
+
+\textbf{Analyse} : la cible restant bloquée (racine 403, crawl quasi vide --- cf. 10.4),
+le scan \#5 ne produit que des constats passifs sur la racine (10 constats, re-vérifiés :
+3 reproduits, 0 contredit). La mesure de corroboration reste celle du tableau 9.2 ;
+l'apport démontré ici est la \textbf{disparition du faux positif récurrent} et la
+transparence du bilan face au blocage. La mesure complète (avec crawl et corroboration
+ZAP) sera refaite après levée du filtrage anti-bot.
+
+% =====================================================================
+\chapter{Difficultés rencontrées et solutions}
+
+\section{Régression du matching de catégories (\code{rce} $\rightarrow$ «~resource~»)}
+
+La comparaison en sous-chaîne faisait matcher le sigle \code{rce} dans
+«~r\textbf{esou}rce~», recatégorisant les alertes «~Sub Resource Integrity~» en injection
+de commande. \textbf{Solution} : matching par \textbf{mot entier} pour les sigles de
+3 lettres, sous-chaîne tolérée à partir de 4 caractères (\code{cve-}, \code{.env}) ---
+validé par les suites importer Nessus et ZAP.
+
+\section{Décompression Brotli non supportée}
+
+Décrit en 8.9.3 : cause racine d'un échec silencieux (corps illisible $\rightarrow$ 0
+détection, crawl à 1 page). Leçon : \textbf{vérifier la chaîne complète} (transport
+$\rightarrow$ décompression $\rightarrow$ parsing) avant d'incriminer la logique métier.
+
+\section{Volume de sondes non borné sur les CMS}
+
+Le crawl débouchant soudain sur 40 pages $\times$ 58 paramètres, le volume de sondes
+explosait. \textbf{Solution} : bornes explicites (\code{MAX\_PROBE\_PAGES},
+\code{MAX\_PARAMS\_PER\_SCAN}), sondes à coût réduit, arrêt anticipé --- la durée de scan
+redevient prévisible (ES-02).
+
+\section{Blocage anti-bot de la cible (limite de la mesure)}
+
+Après plusieurs campagnes de scan, le WAF du site d'étude a fini par \textbf{dropper
+silencieusement les connexions de l'adresse IP du scanner par fenêtres temporelles} ---
+diagnostiqué par tests croisés (curl vs client interne, DNS, TCP, TLS). Les scans lancés
+pendant une fenêtre de blocage échouent à la première requête racine (\code{ReconError}),
+ce qui peut donner l'impression que «~plus rien n'est détecté~». \textbf{Solution} :
+message d'erreur explicite anti-bot, attente entre campagnes, et documentation du
+phénomène comme \textbf{limite méthodologique} : ZAP lui-même y est exposé.
+
+\section{Sémantique des statuts (moteur vs analyste)}
+
+La re-vérification posait initialement des statuts «~Confirmée~» automatiques --- en
+contradiction avec la philosophie RF-12 (la confirmation est un \textbf{verdict humain}).
+\textbf{Solution} : refonte RF-23 --- le moteur renforce la confiance (plafond 0,85),
+l'analyste seul confirme (0,95) ; migration idempotente des anciennes données.
+
+% =====================================================================
+\chapter{Sécurité, éthique et conformité}
+
+Le scan actif d'un tiers sans autorisation est illégal et éthiquement inacceptable.
+\tscan{} intègre des garde-fous systémiques (checklist ES-01$\rightarrow$ES-12 du cahier
+des charges) :
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{ES-01} --- cible confirmée explicitement avant tout scan actif
+        (\code{--authorized}) ;
+  \item \textbf{ES-02} --- périmètre limitable : domaine, profondeur, durée maximale,
+        types de tests ;
+  \item \textbf{ES-03} --- mode sécurisé par défaut : sondes \textbf{GET bénignes
+        uniquement} (charges à nonce, marqueurs dédiés) ; familles destructives exclues
+        par construction (ES-04) ;
+  \item \textbf{ES-05} --- journalisation systématique : chaque scan actif trace cible,
+        horodatages, périmètre, chaque requête émise (\code{RequestHistory}), et les
+        échecs de sondes ;
+  \item \textbf{ES-06} --- traçabilité des corrections manuelles (\code{StatusHistory}
+        avec raison) ;
+  \item \textbf{ES-07} --- résultat brut d'origine conservé \textbf{sans modification} ;
+  \item \textbf{ES-08/ES-09} --- preuves stockées localement ; aucune transmission à un
+        tiers sans action explicite (lookups CVE/KEV à la demande, scan possible hors
+        ligne) ;
+  \item \textbf{ES-10} --- entrées validées avant construction des requêtes de test ;
+  \item \textbf{ES-11} --- intégrité des mises à jour de connaissances vérifiée (taille
+        max, format CVE) ;
+  \item \textbf{ES-12} --- dépendances auditées (\code{pip-audit}).
+\end{itemize}
+
+Le protocole d'évaluation du chapitre 9 a respecté ces exigences : cible autorisée, volume
+faible, mode non destructif, journalisation complète.
+
+% =====================================================================
+\chapter{Limites du MVP}
+
+Les limites suivantes sont assumées et documentées pour l'encadrant (chapitre 15 du cahier
+des charges) :
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{Familles non couvertes} : SSRF, désérialisation, IDOR approfondi ---
+        exclues volontairement (ES-04, non destructivité) ;
+  \item \textbf{Périmètre de crawl} : \tscan{} ne sonde pas les ressources binaires
+        (images, PDF) --- certaines alertes ZAP sur ces ressources ne sont pas
+        reproductibles par conception ;
+  \item \textbf{Blocage anti-bot} : un WAF peut dégrader ou empêcher la mesure (fenêtres
+        de drop) ; le moteur le signale mais ne le contourne pas ;
+  \item \textbf{Le moteur ne confirme pas} : «~Confirmée~» reste un verdict d'analyste ---
+        la corroboration apporte une indication, pas une preuve ;
+  \item \textbf{Empaquetage} : l'exécutable Windows (PyInstaller/Inno Setup) a été
+        produit le 28/09/2026 (deux exécutables one-file et un installeur
+        \code{tscan-0.1.0-setup.exe}) ; reste la vérification d'installation sur machine
+        «~propre~» ;
+  \item \textbf{Tests manuels GUI UC1--UC5} : à exécuter sur poste avec affichage ;
+  \item \textbf{Re-vérification limitée} : elle ne re-vérifie pas les alertes ZAP actives
+        dont la logique de détection n'est pas implémentée côté \tscan{} (ex. injection
+        dans un formulaire soumis) ;
+  \item \textbf{Sentinelle et abstention} : le contrôle négatif anti soft-404 peut
+        conduire à \textbf{s'abstenir} sur une exposition réelle si la ressource ressemble
+        fortement à la page générique de la cible --- compromis assumé (RF-12) :
+        l'incertitude produit une note pour revue analytique, jamais un constat ni une
+        classification silencieuse ;
+  \item \textbf{Corroboration «~historique~»} : la ré-observation d'un lot importé compte
+        un scan \tscan{} antérieur sur la même cible comme preuve de recouvrement ---
+        corroboration différée, pas un rejeu en temps réel de chaque alerte.
+\end{enumerate}
+
+% =====================================================================
+\chapter{Perspectives post-stage}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Installation sur machine «~propre~»} : tester l'installeur généré
+        (exécutable Windows + installeur Inno Setup, produits le 28/09/2026) ;
+  \item \textbf{Élargissement de la parité ZAP} : normalisation des scopes HTTP, alertes
+        de session plus fines, alertes de type «~Content-Security-Policy~» sur les
+        sous-ressources ;
+  \item \textbf{Corroboration inversée} : utiliser la ré-observation pour
+        \textbf{prioriser} les alertes importées non reproduites plutôt que pour les
+        classer d'emblée en faux positifs ;
+  \item \textbf{Base de connaissances} : enrichissement automatique des recommandations
+        via CWE et le catalogue KEV (priorisation des vulnérabilités exploitées
+        activement) ;
+  \item \textbf{CI/CD} : pipeline GitHub Actions (pytest + ruff à chaque push) ;
+  \item \textbf{Distribution} : publication des règles en paquet versionné indépendant du
+        code ;
+  \item \textbf{Contrôle négatif exhaustif} : la sentinelle anti soft-404, étendue en
+        semaine 12 aux injections SQL, XSS, fichiers sensibles et listing de répertoire,
+        doit encore couvrir les familles restantes (SSTI, injection de commande,
+        traversée de chemins) dont les verdicts «~200~» restent exposés au même piège ;
+  \item \textbf{Mesure précision / rappel} : corpus étiqueté (laboratoire + sites sains)
+        pour chiffrer la précision du moteur avant/après correctifs et détecter
+        objectivement les régressions ;
+  \item \textbf{Statistiques de faux positifs par règle} : exploiter les verdicts
+        d'analyste (\code{StatusHistory}, RF-12) pour produire un taux FP par règle et
+        prioriser les améliorations --- sans auto-ajustement automatique des scores, qui
+        ferait dériver le moteur.
+\end{itemize}
+
+% =====================================================================
+\chapter{Bilan personnel et professionnel}
+
+\section{Compétences développées}
+
+\textbf{Techniques} : architecture logicielle (découplage cœur/CLI/GUI, modèle pivot),
+sécurité web appliquée (OWASP Top 10 en pratique, charges bénignes, non-destructivité),
+qualité logicielle (343 tests, linting, migrations), Python avancé (SQLAlchemy, httpx,
+PySide6, Typer), diagnostic réseau/TLS (DNS, TCP, TLS, encodages de transport).
+
+\textbf{Méthodologiques} : gestion de projet MVP, documentation vivante (checklist + README
+reflétant l'état réel), traçabilité des décisions, communication régulière avec
+l'encadrant, rédaction du cahier des charges.
+
+\section{Apport pour un futur ingénieur en génie civil}
+
+Bien que le stage relève de l'informatique, les compétences transférables au génie civil
+sont réelles : \textbf{rigueur méthodologique} (protocoles de mesure, validation
+expérimentale), \textbf{démarche qualité} (tests = contrôles de conformité), gestion de
+projet structurée, et culture de la \textbf{sécurité des systèmes d'information},
+désormais transverse à tout grand projet d'infrastructure (BIM, IoT sur chantiers, jumeaux
+numériques, systèmes SCADA).
+
+\section{Difficultés personnelles et apprentissages}
+
+Le passage d'une logique «~ça fonctionne~» à une logique «~ça fonctionne \textbf{et} c'est
+testé, mesuré, tracé~» a été l'apprentissage central. La gestion des échecs silencieux
+(Brotli, blocage anti-bot) a appris à \textbf{déléguer le diagnostic à l'outil} (messages
+explicites) plutôt qu'à l'utilisateur.
+
+% =====================================================================
+\chapter{Conclusion}
+
+Le stage a permis de livrer \tscan{}, une plateforme fonctionnelle, testée et documentée
+d'analyse, de corrélation et de validation de vulnérabilités web : import de 4 formats de
+scanners, 54 règles YAML versionnées, 27 familles de détection non destructives, scoring
+explicable, ré-observation avec corroboration mesurée (\textbf{76,9~\%} sur le cas
+d'étude), reporting HTML/Markdown, CLI complète et application desktop --- le tout adossé
+à une checklist de sécurité transverse (ES-01$\rightarrow$ES-12) et à \textbf{343 tests
+automatisés}.
+
+Au-delà de l'outil, le stage démontre qu'une \textbf{démarche d'ingénierie rigoureuse} ---
+cahier des charges, MVP incrémental, validation expérimentale, limites assumées --- peut
+produire, en 11 semaines, un système qui répond à une problématique réelle : la
+fiabilisation des alertes de sécurité par corrélation et re-observation.
+
+Les perspectives (installation sur machine «~propre~», CI/CD, élargissement de la parité
+ZAP, corroboration inversée) tracent une feuille de route réaliste pour la suite du
+produit après le stage.
+
+% =====================================================================
+\chapter{Références}
+
+\begin{enumerate}[leftmargin=2em, label={[\arabic*]}]
+  \item Cahier des charges \tscan{}, 16 chapitres --- \code{docs/cahier\_des\_charges.pdf} (projet).
+  \item OWASP Foundation. \textit{OWASP Top 10:2021}. \url{https://owasp.org/Top10/}
+  \item OWASP ZAP. \textit{Zed Attack Proxy --- User Guide}. \url{https://www.zaproxy.org/docs/}
+  \item Nuclei (ProjectDiscovery). \textit{Template-based vulnerability scanner}.
+        \url{https://docs.projectdiscovery.io/tools/nuclei/overview}
+  \item Tenable. \textit{Nessus}. \url{https://www.tenable.com/products/nessus}
+  \item Greenbone. \textit{OpenVAS}. \url{https://www.openvas.org/}
+  \item NIST. \textit{National Vulnerability Database (NVD)}. \url{https://nvd.nist.gov/}
+  \item CISA. \textit{Known Exploited Vulnerabilities (KEV) Catalog}.
+        \url{https://www.cisa.gov/known-exploited-vulnerabilities-catalog}
+  \item MITRE. \textit{Common Weakness Enumeration (CWE)}. \url{https://cwe.mitre.org/}
+  \item NIST. \textit{Common Platform Enumeration (CPE)}. \url{https://cpe.mitre.org/}
+  \item pytest. \textit{Framework de tests Python}. \url{https://docs.pytest.org/}
+  \item httpx. \textit{HTTP client for Python}. \url{https://www.python-httpx.org/}
+  \item SQLAlchemy. \url{https://www.sqlalchemy.org/}
+  \item PySide6 / Qt for Python. \url{https://doc.qt.io/qtforpython/}
+  \item Typer. \url{https://typer.tiangolo.com/}
+  \item ruff. \textit{Linter Python}. \url{https://docs.astral.sh/ruff/}
+  \item RFC 9110 --- \textit{HTTP Semantics}. \url{https://www.rfc-editor.org/rfc/rfc9110}
+  \item RFC 7932 --- \textit{Brotli Compressed Data Format}. \url{https://www.rfc-editor.org/rfc/rfc7932}
+\end{enumerate}
+
+% =====================================================================
+% ANNEXES
+% =====================================================================
+\appendix
+
+\chapter{Commandes CLI principales}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{@{}lp{9.5cm}@{}}
+\toprule
+\textbf{Commande} & \textbf{Rôle} \\
+\midrule
+\code{tscan import <fichier>} & Importe un résultat Nuclei (JSONL), ZAP (JSON) ou Nessus/OpenVAS (XML) vers le modèle pivot \\
+\code{tscan scan <cible>} & Lance un scan actif autorisé et non destructif sur la cible \\
+\code{tscan correlate} & Corrèle et score les constats sur une même cible \\
+\code{tscan list} & Liste les constats enregistrés avec filtres \\
+\code{tscan correct} & Corrige manuellement le statut d'un constat (RF-12, ES-06) \\
+\code{tscan report} & Génère un rapport HTML ou Markdown (RF-27--29) \\
+\code{tscan lookup-cve <id>} & Interroge le cache local NVD pour une CVE \\
+\code{tscan update-kev} & Synchronise le catalogue CISA KEV en cache local \\
+\code{tscan rex <cible>} & Ré-observation : corrobore les imports avec un scan actif frais \\
+\bottomrule
+\end{tabular}
+\caption{Commandes CLI principales de \tscan{}.}
+\end{table}
+
+\chapter{Rappel des exigences de sécurité (ES-01 à ES-12)}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{ES-01} : cible confirmée explicitement avant tout scan actif.
+  \item \textbf{ES-02} : périmètre limitable (domaine, profondeur, durée, types de tests).
+  \item \textbf{ES-03} : mode sécurisé (non destructif) activé par défaut.
+  \item \textbf{ES-04} : familles à risque (SSRF, désérialisation\ldots) exclues du moteur.
+  \item \textbf{ES-05} : journalisation systématique des scans actifs.
+  \item \textbf{ES-06} : traçabilité des corrections manuelles de statut.
+  \item \textbf{ES-07} : résultat brut d'origine conservé sans modification.
+  \item \textbf{ES-08} : preuves stockées localement avec protection adaptée.
+  \item \textbf{ES-09} : aucune transmission de données à un tiers sans action explicite.
+  \item \textbf{ES-10} : entrées validées avant construction des requêtes de test.
+  \item \textbf{ES-11} : intégrité vérifiée sur les données de mise à jour.
+  \item \textbf{ES-12} : dépendances tierces suivies avec vigilance (\code{pip-audit}).
+\end{itemize}
+
+\end{document}
