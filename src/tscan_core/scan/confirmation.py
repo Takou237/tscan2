@@ -59,14 +59,14 @@ from tscan_core.scan.detections import (
     weak_hash,
     xss,
 )
+from tscan_core.scan.progress import notify
+from tscan_core.status import AUTOMATIC_ACTOR, change_status
 
 # Cadence de re-vérification : une sonde qui échoue n'a pas besoin de la
 # politique robuste de reconnaissance (3 tentatives, backoff exponentiel,
 # timeout 10 s ≈ 35 s par échec). Cible bloquante en fin de scan = des dizaines
 # de re-vérifications : on réduit à 1 tentative / timeout 5 s (ES-02).
 _REVERIFY_KWARGS = {"max_retries": 1, "backoff": 0.2, "timeout": 5.0}
-from tscan_core.scan.progress import notify
-from tscan_core.status import AUTOMATIC_ACTOR, change_status
 
 # La re-vérification (RF-23) ajuste la confiance sans jamais CONFIRMER : le
 # moteur plafonne volontairement son score (0,85) sous le seuil de la décision

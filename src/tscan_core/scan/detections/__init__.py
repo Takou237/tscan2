@@ -298,7 +298,7 @@ def run_active_detections(
 # Imports placés en fin de fichier : les modules du package utilisent
 # `DetectionResult` et `FindingInfo` (définis ci-dessus) dans leurs signatures,
 # un import en tête créerait une référence circulaire pendant l'initialisation.
-from . import (
+from . import (  # noqa: E402 - imports différés, cf. commentaire ci-dessus
     big_redirect,
     cmd_injection,
     cookies,

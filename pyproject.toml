@@ -26,6 +26,13 @@ dev = [
     # ES-12 : contrôle des vulnérabilités des dépendances tierces (cf. script
     # `scripts/audit_deps.py` et la commande documentée dans le README).
     "pip-audit>=2.7",
+    # Contrainte de sécurité, pas de fonctionnalité : `pip-audit` tire
+    # `requests` -> `urllib3`, et urllib3 < 2.8.0 présente 3 vulnérabilités
+    # connues (PYSEC-2026-4175/4176/4177). Tscan n'importe pas `requests`
+    # (0 occurrence dans `src/`) et les exécutables PyInstaller n'embarquent
+    # donc pas urllib3, mais l'audit ES-12 porte sur tout l'environnement :
+    # sans ce plancher, `pip-audit` signale l'environnement comme vulnérable.
+    "urllib3>=2.8.0",
 ]
 
 [project.scripts]
@@ -44,3 +51,12 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 src = ["src"]
+
+[tool.ruff.lint]
+# `E4`/`E7`/`E9`/`F` : le jeu par défaut de ruff, rendu explicite.
+# `BLE` et `S110` : donnent leur sens aux suppressions déjà présentes dans le
+# code (`# noqa: BLE001` sur les `except Exception` justifiés, `# noqa: S110`
+# sur le `try/except: pass` d'affichage) — sans ces règles, ces directives
+# étaient mortes et le lecteur ne pouvait pas savoir ce qu'elles neutralisaient.
+# `RUF100` : détecte les directives `# noqa` devenues inutiles.
+select = ["E4", "E7", "E9", "F", "BLE", "S110", "RUF100"]

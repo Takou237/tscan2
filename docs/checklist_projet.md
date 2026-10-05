@@ -208,7 +208,7 @@ Cette checklist suit le planning du chapitre 13 du cahier des charges (11 semain
 - [x] ES-09 — Aucune transmission de données à un tiers sans action explicite — *lookup-cve / update-kev = actions explicites ; scan hors ligne possible*
 - [x] ES-10 — Entrées validées avant construction des requêtes de test
 - [x] ES-11 — Intégrité vérifiée sur les données de mise à jour (règles, connaissances) — *garde-fou de taille (MAX_KEV_BYTES / MAX_NVD_BYTES) + validation du format CVE avant intégration, dans `kev_client.py` et `nvd_client.py` (tests dédiés), 21/08/2026*
-- [x] ES-12 — Dépendances tierces suivies avec vigilance — *outil `pip-audit` ajouté en dev + script `scripts/audit_deps.py` ; audit vert (pip mis à jour 26.2.1), 21/08/2026*
+- [x] ES-12 — Dépendances tierces suivies avec vigilance — *outil `pip-audit` ajouté en dev + script `scripts/audit_deps.py` ; audit vert (pip mis à jour 26.2.1), 21/08/2026. **Audit rejoué le 02/10/2026 : 3 vulnérabilités trouvées** (PYSEC-2026-4175/4176/4177 sur `urllib3` 2.7.0, corrigées en 2.8.0). Origine analysée : `pip-audit` → `requests` → `urllib3`, donc **chaîne de l'outil d'audit uniquement** — Tscan n'importe pas `requests` (0 occurrence dans `src/`) et les exécutables PyInstaller n'embarquent pas urllib3 ; le plancher `urllib3>=2.8.0` ajouté à l'extra `dev` rend la correction reproductible. Nouvelle exécution : « No known vulnerabilities found ».**
 
 ---
 

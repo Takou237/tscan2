@@ -290,18 +290,27 @@ propre sur `src/` et `tests/`. Organisation :
 - **Régressions de données** : `test_migration.py` (migration idempotente des anciens
   « Confirmée » moteur), `test_offline.py` (fonctionnement hors-ligne).
 
-**Dette technique connue** : le paquet `src/tscan_core/detection/` est vide (héritage
-d'un ancien découpage, à supprimer) ; le typage n'est pas outillé (`py.typed` absent,
-aucune configuration mypy — 8 `# type: ignore[attr-defined]` sur du monkey-patching
-d'`httpx.Client`) ; la configuration ruff ne fixe que `line-length` et `src` (les
-suppressions `# noqa: BLE001` / `S110` du code visent des règles non activées) ; la
-mesure précision/rappel sur corpus étiqueté reste à faire (perspective post-stage, cf.
-rapport de stage ch. 13).
+**Dette technique connue** : le typage n'est pas outillé (`py.typed` absent, aucune
+configuration mypy — 8 `# type: ignore[attr-defined]` sur du monkey-patching
+d'`httpx.Client`) ; 75 lignes dépassent le `line-length = 100` déclaré (E501 n'est pas
+dans le `select` : ce serait un refonte de formatage, pas un défaut) ; la mesure
+précision/rappel sur corpus étiqueté reste à faire (perspective post-stage, cf. rapport
+de stage ch. 13).
+
+*Dette soldée le 02/10/2026* : le paquet vide `src/tscan_core/detection/` (héritage d'un
+ancien découpage, jamais importé) a été supprimé ; la configuration ruff fixait
+`select = ["E4", "E7", "E9", "F"]` implicitement, ce qui laissait **mortes** les quatre
+directives `# noqa: BLE001` / `S110` déjà présentes dans le code — le lecteur ne pouvait
+pas savoir ce qu'elles neutralisaient. `BLE`, `S110` et `RUF100` (détection des
+directives `# noqa` devenue inutiles) sont maintenant activés, et les trois violations
+réelles ainsi révélées ont été corrigées (`checks.py` : lambda affectée à un nom → `def` ;
+`confirmation.py` : imports remontés en tête ; `detections/__init__.py` : imports
+différés documentés par `# noqa: E402`).
 
 ---
 
 *Document généré le 21/09/2026 à partir de la lecture du code (`src/tscan_core`,
 `src/tscan_cli`, `src/tscan_gui`, `rules/`, `knowledge/`) et de l'exécution vérifiée de
 la suite de tests, puis mis à jour le 02/10/2026 (empaquetage, compte de tests, dette
-technique). Références RF-xx / ES-xx / RNF-xx : cahier des charges, chapitres 6, 7
-et 9.*
+technique, durcissement du lint). Références RF-xx / ES-xx / RNF-xx : cahier des
+charges, chapitres 6, 7 et 9.*

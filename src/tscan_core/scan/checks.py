@@ -185,9 +185,10 @@ def _is_generic_response(
     if reflection_gap > 0.3:
         return True
 
-    strip_token = lambda body: body.replace(calibration_token or "", "").replace(
-        (probe.request_url or "").rstrip("/"), ""
-    )
+    def strip_token(body: str) -> str:
+        return body.replace(calibration_token or "", "").replace(
+            (probe.request_url or "").rstrip("/"), ""
+        )
     probe_body = strip_token(probe.body)
     calibration_body = strip_token(calibration.body)
     if probe_body and calibration_body:
