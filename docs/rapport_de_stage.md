@@ -1,6 +1,6 @@
 # Rapport de stage — Développement de Tscan, plateforme d'analyse, de corrélation et de validation de vulnérabilités
 
-> **Stage effectué à l'ANTIC (Agence Nationale des Technologies de l'Information et de la Communication), dans le cadre du cycle de formation en génie civil.**
+> **Stage effectué à l'ANTIC (Agence Nationale des Technologies de l'Information et de la Communication), dans le cadre du cycle de formation en informatique, option cybersécurité.**
 > Période : [À COMPLÉTER — ex. 20/07/2026 → 18/09/2026]. Stagiaire : KEN DANIEL Takou. Encadrant : [À COMPLÉTER].
 
 ---
@@ -642,14 +642,23 @@ Typer), diagnostic réseau/TLS (DNS, TCP, TLS, encodages de transport).
 reflétant l'état réel), traçabilité des décisions, communication régulière avec
 l'encadrant, rédaction du cahier des charges.
 
-### 14.2 Apport pour un futur ingénieur en génie civil
+### 14.2 Apport pour un futur ingénieur en cybersécurité
 
-Bien que le stage relève de l'informatique, les compétences transférables au génie civil
-sont réelles : **rigueur méthodologique** (protocoles de mesure, validation expérimentale),
-**démarche qualité** (tests = contrôles de conformité), gestion de projet structurée,
-et culture de la **sécurité des systèmes d'information**, désormais transverse à tout
-grand projet d'infrastructure (BIM, IoT sur chantiers, jumeaux numériques, systèmes
-SCADA).
+Le stage s'inscrit directement dans ma formation en informatique, option cybersécurité,
+et l'a concrétisée par une pratique professionnelle complète :
+
+- **sécurité web appliquée** : OWASP Top 10 en pratique (en-têtes de sécurité, XSS, CSRF,
+  SQLi, composants vulnérables), charges bénignes et non-destructivité (ES-01→ES-05) ;
+- **méthodologie d'évaluation des vulnérabilités** : étude de l'existant (Nuclei, ZAP,
+  Nessus/OpenVAS), corrélation multi-sources, scoring de confiance explicable,
+  traitement des faux positifs — le quotidien d'un analyste ;
+- **opérationnalisation des référentiels** : CVE/NVD, CISA KEV, CWE, CPE — savoir lire,
+  croiser et exploiter les bases de connaissances du métier ;
+- **conformité et éthique** : autorisation de scan, périmètre borné, journalisation,
+  audit des dépendances — réflexes indispensables en environnement CERT/SOC ;
+- **ingénierie logicielle appliquée à la sécurité** : 348 tests automatisés, qualité
+  vérifiée (pytest, ruff), empaquetage, documentation — la fiabilité d'un outil de
+  sécurité est la condition de sa crédibilité.
 
 ### 14.3 Difficultés personnelles et apprentissages
 
