@@ -23,7 +23,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from tscan_core.knowledge_base import load_cwe_reference
+from tscan_core.knowledge_base import apply_whitelist, load_cwe_reference
 from tscan_core.models import Finding, FindingStatus
 from tscan_core.models import Scan as _Scan
 from tscan_core.rule_engine import load_rules
@@ -167,6 +167,24 @@ def generate_report(
     findings = query.all()
     if statuses is not None:
         findings = [f for f in findings if f.status in statuses]
+
+    # Whitelist non destructive (knowledge/finding_whitelist.yaml) : le bruit
+    # déclaré est écarté du rapport, les constats restent intacts en base.
+    findings = apply_whitelist(findings)
+
+    # Déduplication légère non-destructive (par cible/catégorie/titre/emplacement)
+    deduped: list[Finding] = []
+    seen: set[tuple] = set()
+    for finding in findings:
+        finding_target = finding.scan.target if finding.scan else ""
+        title_clean = (finding.title or "").strip().lower()
+        mat = (finding.matched_at or "").strip().lower()
+        key = (finding_target, finding.category, title_clean, mat)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(finding)
+        # si déjà vu: ignorer doublon (garder premier) - non-destructif
+    findings = deduped
 
     rules = _rule_map()
     cwe_by_category = _cwe_index()

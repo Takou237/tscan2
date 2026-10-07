@@ -22,7 +22,12 @@ from tscan_core.importers import SUPPORTED_FORMATS, UnsupportedFormatError, impo
 from tscan_core.importers.nuclei import NucleiParseError
 from tscan_core.importers.reobserve_service import REOBERVE_CRAWL_MAX_PAGES, reobserve_imported_scan
 from tscan_core.importers.zap import ZapParseError
-from tscan_core.knowledge_base import UpdateManagerError, lookup_component, update_kev_catalog
+from tscan_core.knowledge_base import (
+    UpdateManagerError,
+    apply_whitelist,
+    lookup_component,
+    update_kev_catalog,
+)
 from tscan_core.models import Finding, FindingStatus
 from tscan_core.recon.client import ReconError
 from tscan_core.reporting import SEVERITY_ORDER, generate_report
@@ -203,6 +208,10 @@ def list_command(
         if status is not None:
             query = query.filter_by(status=FindingStatus(status))
         findings = query.all()
+
+        # Filtrage whitelist non destructif (knowledge/finding_whitelist.yaml) :
+        # le bruit écarté reste en base, seul l'affichage est filtré.
+        findings = apply_whitelist(findings)
 
         if not findings:
             typer.echo("Aucun résultat.")

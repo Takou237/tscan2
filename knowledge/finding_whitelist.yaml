@@ -1,0 +1,114 @@
+﻿# Whitelist des findings à exclure des rapports (filtrage non-destructif)
+enabled: true
+rules:
+  - id: info_very_low_conf
+    name: 'Informations à très faible confiance'
+    enabled: true
+    reason: 'Alertes informatives (info) avec confiance très faible génèrent beaucoup de bruit'
+    match:
+      severity: ['info']
+      confidence_lt: 0.40
+  - id: info_low_conf
+    name: 'Informations à faible confiance'
+    enabled: true
+    reason: 'Bruit informatif récurrent à filtrer de manière prudente'
+    match:
+      severity: ['info']
+      confidence_lt: 0.60
+  - id: timestamp_disclosure_noise
+    name: 'Divulgation dhorodatages (bruit)'
+    enabled: true
+    reason: 'Timestamp Disclosure génère beaucoup de bruit'
+    match:
+      title_contains:
+        - 'timestamp disclosure'
+        - 'unix timestamp'
+      severity: ['info', 'low']
+      confidence_lt: 0.70
+  - id: suspicious_comments_noise
+    name: 'Commentaires suspects (bruit)'
+    enabled: true
+    reason: 'Information Disclosure - Suspicious Comments souvent informatifs'
+    match:
+      title_contains:
+        - 'suspicious comments'
+        - 'information disclosure - suspicious'
+      severity: ['info']
+      confidence_lt: 0.70
+  - id: cache_control_reexamine
+    name: 'Re-examine Cache-control (bruit)'
+    enabled: true
+    reason: 'Re-examine Cache-control Directives souvent informatif'
+    match:
+      title_contains:
+        - 're-examine cache-control'
+        - 'cache-control directives'
+      severity: ['info']
+      confidence_lt: 0.70
+  - id: auth_request_identified_noise
+    name: 'Authentication Request Identified (constat)'
+    enabled: true
+    reason: 'Simple constat dauthentification, pas une vulnérabilité'
+    match:
+      title_contains:
+        - 'authentication request identified'
+      severity: ['info', 'low']
+      confidence_lt: 0.70
+  - id: cookie_poisoning_info
+    name: 'Cookie Poisoning (informatif)'
+    enabled: true
+    reason: 'Cookie Poisoning en info/low confidence souvent bruit'
+    match:
+      title_contains:
+        - 'cookie poisoning'
+      severity: ['info']
+      confidence_lt: 0.70
+  - id: charset_mismatch_noise
+    name: 'Incompatibilité de charset (bruit)'
+    enabled: true
+    reason: 'Incompatibilité de charset souvent cosmétique/bruit'
+    match:
+      title_contains:
+        - 'charset'
+      severity: ['info']
+      confidence_lt: 0.70
+  - id: csrf_very_low_conf
+    name: 'Absence jetons CSRF - très faible confiance'
+    enabled: false
+    reason: 'À activer quaprès validation stricte (préserver TP)'
+    match:
+      title_contains:
+        - 'anti-csrf'
+        - 'csrf'
+      severity: ['low', 'medium']
+      confidence_lt: 0.40
+  - id: potential_xss_info_low
+    name: 'Potential XSS (constat flou)'
+    enabled: true
+    reason: 'Potential XSS souvent bruit à faible confiance'
+    match:
+      title_contains:
+        - 'potential xss'
+        - 'user controllable html'
+      severity: ['info']
+      confidence_lt: 0.70
+  - id: cross_domain_js_info
+    name: 'Cross-Domain JS inclusion (info)'
+    enabled: true
+    reason: 'Cross-Domain JS inclusion souvent acceptable/bruité'
+    match:
+      title_contains:
+        - 'cross-domain javascript'
+        - 'cross domain javascript'
+      severity: ['info']
+      confidence_lt: 0.65
+  - id: x_powered_by_noise
+    name: 'X-Powered-By leak (bruit)'
+    enabled: true
+    reason: 'Divulgation info mineure, bruit fréquent à faible confiance'
+    match:
+      title_contains:
+        - 'x-powered-by'
+        - 'powered-by'
+      severity: ['info', 'low']
+      confidence_lt: 0.70

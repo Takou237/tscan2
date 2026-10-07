@@ -36,6 +36,7 @@ data/knowledge_cache/
 # Scripts et sorties de debug / vérification manuelle (jetables)
 /_check_corro.py
 /diag_db.py
+/tmp_*.py
 tests/_*.py
 tests/.labo_*.txt
 tests/.rescan_*.txt

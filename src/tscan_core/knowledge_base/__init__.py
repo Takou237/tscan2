@@ -1,4 +1,12 @@
 from tscan_core.knowledge_base.cwe_reference import CweEntry, load_cwe_reference
+from tscan_core.knowledge_base.finding_whitelist import (
+    Whitelist,
+    WhitelistError,
+    WhitelistRule,
+    apply_whitelist,
+    finding_matches_whitelist,
+    load_whitelist,
+)
 from tscan_core.knowledge_base.fp_signatures import (
     FpSignatureCategory,
     FpSignaturesError,
@@ -23,11 +31,17 @@ __all__ = [
     "KevRecord",
     "NvdClientError",
     "UpdateManagerError",
+    "Whitelist",
+    "WhitelistError",
+    "WhitelistRule",
+    "apply_whitelist",
     "check_kev",
     "fetch_kev_catalog",
+    "finding_matches_whitelist",
     "get_category",
     "load_cwe_reference",
     "load_fp_signatures",
+    "load_whitelist",
     "lookup_component",
     "search_cve_by_keyword",
     "update_kev_catalog",
