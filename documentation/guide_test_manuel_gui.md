@@ -23,11 +23,12 @@ Ce guide est référencé par :
 | **UC4** | Lancer un scan actif autorisé | `Scanner…` + onglets Progression / Historique |
 | **UC5** | Générer un rapport | `Rapport…` |
 
-Hors périmètre : la logique métier est déjà couverte par les 348 tests pytest
+Hors périmètre : la logique métier est déjà couverte par les tests pytest
 (`tests/test_gui_viewmodel.py` teste les filtres, le tri et la correction sans
-écran). Ce guide valide ce qu'un test automatisé ne peut pas voir : **le rendu
-réel à l'écran, la réactivité de la fenêtre pendant une opération longue, et la
-cohérence des messages affichés**.
+écran ; `tests/test_gui_theme.py` teste la génération des deux thèmes, toujours
+sans écran). Ce guide valide ce qu'un test automatisé ne peut pas voir : **le
+rendu réel à l'écran, la réactivité de la fenêtre pendant une opération longue,
+et la cohérence des messages affichés**.
 
 **Durée indicative : 30 à 45 minutes.**
 
@@ -50,11 +51,17 @@ lancer l'application :
 ```powershell
 # PowerShell, depuis la racine du dépôt
 $env:USERPROFILE = "$PWD\.tscan_recette"
+$env:TSCAN_SETTINGS_DIR = "$PWD\.tscan_recette"   # thème + géométrie isolés
 .venv\Scripts\python.exe -m tscan_gui
 ```
 
 > Sous Git Bash : `export USERPROFILE="$(cygpath -w "$PWD/.tscan_recette")"`
 > (même mécanisme que `scripts/demo_scenario_b.sh`).
+
+`TSCAN_SETTINGS_DIR` isole les préférences de l'interface (thème clair/sombre,
+géométrie de fenêtre) dans un fichier INI du dossier de recette : sans lui, la
+recette réutilise le thème réglé précédemment sur la machine — inutile pour
+tester R5, mais indispensable pour repartir d'un état connu.
 
 Le dossier `.tscan_recette/` est un artefact local de recette : il ne doit pas
 être commité.
@@ -139,19 +146,36 @@ Cliquer successivement sur les en-têtes **Gravité**, **Score**, **Titre**.
 **Attendu** : les lignes sont réordonnées. **La couleur de fond de la cellule
 Gravité reste attachée à son constat** (elle suit la ligne, pas le tri).
 
-**Critère** : le tri réordonne sans qu'aucune ligne ne change de gravité.
+**Tri attendu** :
+
+- **Gravité** : dans l'ordre métier *Critique → Élevée → Moyenne → Faible →
+  Information* (et non par ordre alphabétique) ;
+- **Score** : valeurs numériques (`0.95` avant `0.60`), les `--` (sans score)
+  en dernier ;
+- **ID / Instances** : valeurs numériques (`10` après `9`, pas avant).
+
+**Critère** : le tri réordonne sans qu'aucune ligne ne change de gravité, et
+les trois colonnes ci-dessus trient sur leur valeur réelle.
 
 ### 4.4 Filtres
 
 | Action | Attendu |
 |---|---|
 | **Statut** → `Non validé` | seules les lignes non validées restent |
-| **Gravité** → `high` | seule la ligne *Administration Panel* reste |
+| **Gravité** → `Élevée` (valeur `high`) | seule la ligne *Administration Panel* reste |
 | **Rechercher** : `csp` | seule la ligne CSP reste |
 | **Cible** → `Toutes` | inchangé |
+| **Compteur** (à droite de la recherche) | il affiche le nombre de lignes affichées, par exemple `3 constats` ; il retombe à `0 constat` quand un filtre ne laisse rien passer |
 
 Les filtres sont **combinés en ET logique** : `Statut = Non validé` **et**
-`Gravité = high` donne la ligne d'administration.
+`Gravité = Élevée` donne la ligne d'administration. La valeur brute (`high`)
+reste utilisée dans les exports et les appels CLI ; la GUI affiche les libellés
+français (« Élevée », « Moyenne », …), les mêmes que dans les rapports.
+
+Si aucun filtre ne laisse passer de ligne, la table affiche au centre
+`Aucun constat ne correspond aux filtres actifs.` (et non une table vide et
+muette) : c'est le message qui doit apparaître, il disparaît dès qu'on
+réinitialise.
 
 Puis `Réinitialiser` : **toutes** les lignes reviennent, les 4 filtres sont remis
 à leur valeur par défaut.
@@ -167,7 +191,7 @@ Le moteur **ne confirme jamais** seul : la décision finale appartient à
 l'analyste (RF-12). C'est le cœur du parcours à valider.
 
 1. Sélectionner un constat (par exemple la ligne *Administration Panel*,
-   gravité `high`).
+   gravité `Élevée`).
 2. Dans `Corriger le statut`, choisir **`Confirmé`**.
 3. Saisir une raison, par exemple : `Reproduit manuellement sur la page d'accueil`
    (champ **Raison**, sous le bouton `Appliquer`).
@@ -389,7 +413,21 @@ doivent rester acquis :
 | R1 | Réduire la fenêtre en dessous de 700×380 | Des barres de défilement apparaissent ; **aucun panneau ne disparaît** |
 | R2 | Lancer un second scan depuis un PC portable en Wi-Fi qui se déconnecte | Échec affiché proprement (« Échec du scan — voir le journal. »), pas de fenêtre figée |
 | R3 | Fermer l'application pendant un scan | Les constats déjà enregistrés en base sont conservés |
-| R4 | Ouvrir la fenêtre avec une base vide | Liste vide, aucun message d'erreur, application utilisable |
+| R4 | Ouvrir la fenêtre avec une base vide | Liste vide **et message explicite** (`Aucun constat en base. « Importer… » charge un résultat de scanner.`), aucun message d'erreur, application utilisable |
+| R5 | Cliquer `Thème clair` (ou `Ctrl+T`) puis `Thème sombre` | L'interface bascule **sans redémarrage** (fond, tableaux, barre d'outils, dialogues), le libellé du bouton annonce la cible (`Thème sombre` quand on est en clair) ; **relancer l'application** : le dernier thème est conservé |
+| R6 | Redimensionner la fenêtre et le séparateur, fermer puis rouvrir | La géométrie et la position du séparateur sont conservées |
+
+### Raccourcis clavier (à contrôler une fois)
+
+| Action | Raccourci |
+|---|---|
+| `Importer…` | `Ctrl+O` |
+| `Scanner…` | `Ctrl+N` |
+| `Corréler` | `Ctrl+K` |
+| `Rapport…` | `Ctrl+R` |
+| `Arrêter` | `Ctrl+.` (actif seulement pendant un scan) |
+| `Actualiser` | `F5` |
+| Bascule de thème | `Ctrl+T` |
 
 ---
 
@@ -407,6 +445,8 @@ doivent rester acquis :
 | R2 — Perte de réseau | ☐ OK ☐ ÉCART | |
 | R3 — Fermeture pendant scan | ☐ OK ☐ ÉCART | |
 | R4 — Base vide | ☐ OK ☐ ÉCART | |
+| R5 — Bascule de thème | ☐ OK ☐ ÉCART | |
+| R6 — Géométrie mémorisée | ☐ OK ☐ ÉCART | |
 
 **Recette effectuée le** : ____/____/2026 — **Par** : ______________
 

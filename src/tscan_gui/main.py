@@ -15,6 +15,7 @@ from __future__ import annotations
 import sys
 
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -22,6 +23,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QSplitter,
+    QStyle,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -30,6 +32,15 @@ from PySide6.QtWidgets import (
 from tscan_core.models import Finding, FindingStatus
 from tscan_core.status import correct_status_manually
 from tscan_gui.dialogs import CorrelateDialog, ImportDialog, ReportDialog, ScanDialog
+from tscan_gui.theme import (
+    apply_theme,
+    load_window_setting,
+    next_theme,
+    save_window_setting,
+    store_theme,
+    stored_theme,
+    theme_label,
+)
 from tscan_gui.viewmodel import (
     get_finding_detail,
     list_findings,
@@ -92,7 +103,11 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Tscan — Analyse de vulnérabilités")
-        self.resize(1100, 630)
+
+        # Thème courant (clair / sombre) : lu ici pour que la fenêtre soit
+        # utilisable même instanciée hors `main()`. La feuille de style est
+        # déjà appliquée sur le `QApplication` par `main()`.
+        self._theme = stored_theme()
 
         # Session partagée pour les lectures rapides de l'interface.
         self._session = open_default_db()
@@ -115,6 +130,7 @@ class MainWindow(QMainWindow):
 
         self._build_toolbar()
         self._build_central()
+        self._restore_window_settings()
 
         self.filter_bar.filters_changed.connect(self._apply_filters)
         self.table.finding_selected.connect(self._show_detail)
@@ -122,29 +138,106 @@ class MainWindow(QMainWindow):
 
         self.refresh()
 
+    def _restore_window_settings(self) -> None:
+        """Restaure géométrie et séparateur mémorisés au lancement précédent.
+
+        `geometry_restored` dit à `main()` s'il faut encore recentrer la
+        fenêtre (premier lancement) ou si l'utilisateur a déjà redimensionné.
+        """
+        geometry = load_window_setting("window_geometry")
+        self.geometry_restored = bool(geometry) and self.restoreGeometry(geometry)
+        if not self.geometry_restored:
+            self.resize(1100, 630)
+        state = load_window_setting("splitter_state")
+        if state:
+            self.splitter.restoreState(state)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Mémorise la géométrie et le séparateur, puis ferme la session."""
+        save_window_setting("window_geometry", self.saveGeometry())
+        save_window_setting("splitter_state", self.splitter.saveState())
+        self._session.close()
+        super().closeEvent(event)
+
     # --- Construction de l'interface ----------------------------------------
 
     def _build_toolbar(self) -> None:
         toolbar = self.addToolBar("Actions")
         toolbar.setMovable(False)
-        toolbar.addAction("Importer…", self._on_import)
-        toolbar.addAction("Scanner…", self._on_scan)
-        toolbar.addAction("Corréler", self._on_correlate)
-        toolbar.addAction("Rapport…", self._on_report)
+        # Icônes système + libellés : la barre se lit d'un coup d'œil, et
+        # chaque action dispose d'un raccourci clavier (affiché en infobulle).
+        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        style = QApplication.style()
+        icons = style.standardIcon
+
+        importer = toolbar.addAction(
+            icons(QStyle.StandardPixmap.SP_DialogOpenButton), "Importer…", self._on_import
+        )
+        importer.setShortcut("Ctrl+O")
+        scanner = toolbar.addAction(
+            icons(QStyle.StandardPixmap.SP_MediaPlay), "Scanner…", self._on_scan
+        )
+        scanner.setShortcut("Ctrl+N")
+        correler = toolbar.addAction(
+            icons(QStyle.StandardPixmap.SP_DialogApplyButton), "Corréler", self._on_correlate
+        )
+        correler.setShortcut("Ctrl+K")
+        rapport = toolbar.addAction(
+            icons(QStyle.StandardPixmap.SP_DialogSaveButton), "Rapport…", self._on_report
+        )
+        rapport.setShortcut("Ctrl+R")
+
         toolbar.addSeparator()
-        self.stop_action = toolbar.addAction("Arrêter", self._on_stop)
+        self.stop_action = toolbar.addAction(
+            icons(QStyle.StandardPixmap.SP_BrowserStop), "Arrêter", self._on_stop
+        )
+        self.stop_action.setShortcut("Ctrl+.")
         self.stop_action.setEnabled(False)
+
         toolbar.addSeparator()
-        toolbar.addAction("Actualiser", self.refresh)
+        actualiser = toolbar.addAction(
+            icons(QStyle.StandardPixmap.SP_BrowserReload), "Actualiser", self.refresh
+        )
+        actualiser.setShortcut("F5")
+
+        # Bascule clair / sombre : le libellé annonce la cible, la préférence
+        # est mémorisée entre les lancements (QSettings, `tscan_gui.theme`).
+        self.theme_action = toolbar.addAction(
+            theme_label(self._theme), self._toggle_theme
+        )
+        self.theme_action.setShortcut("Ctrl+T")
+        self.theme_action.setToolTip(self._theme_tooltip())
+
+    def _toggle_theme(self) -> None:
+        """Bascule clair <-> sombre en direct et mémorise le choix."""
+        self._theme = next_theme(self._theme)
+        store_theme(self._theme)
+        app = QApplication.instance()
+        if app is not None:
+            apply_theme(app, self._theme)
+        self.theme_action.setText(theme_label(self._theme))
+        self.theme_action.setToolTip(self._theme_tooltip())
+        # Les pastilles de gravité/statut dépendent du thème (texte blanc sur
+        # la table sombre) : la table est repeinte à chaque bascule.
+        self.table.set_theme(self._theme)
+
+    def _theme_tooltip(self) -> str:
+        current = "sombre" if self._theme == "dark" else "clair"
+        return (
+            f"Thème actuel : {current} — cliquer pour basculer (Ctrl+T). "
+            "Le choix est conservé au prochain lancement."
+        )
 
     def _build_central(self) -> None:
         self.filter_bar = FilterBar(list_targets(self._session))
         self.table = FindingsTable()
+        self.table.set_theme(self._theme)
         self.detail_panel = FindingDetailPanel()
         self.progress_panel = ScanProgressPanel()
         self.history_panel = RequestHistoryPanel()
 
         splitter = QSplitter(Qt.Horizontal)
+        self.splitter = splitter
         splitter.addWidget(self.table)
         splitter.addWidget(self.detail_panel)
         splitter.setStretchFactor(0, 3)
@@ -206,14 +299,28 @@ class MainWindow(QMainWindow):
 
     def _apply_filters(self, state) -> None:
         rows = list_findings(self._session, **state.as_dict())
+        self.filter_bar.set_count(len(rows))
         signature = tuple(
-            (r.id, r.status, r.severity, r.category, r.title, r.matched_at, r.score)
+            (r.id, r.status, r.severity, r.category, r.title, r.matched_at, r.score, r.instance_count)
             for r in rows
         )
         if signature == self._last_rows_signature:
             return  # rien de nouveau : pas de reconstruction (fluence S11)
         self._last_rows_signature = signature
-        self.table.populate(rows)
+        # La sélection du panneau de détail est conservée d'un rafraîchissement
+        # à l'autre (constats au fil de l'eau pendant un scan).
+        active = any((state.text, state.status, state.severity, state.target))
+        empty_message = (
+            "Aucun constat ne correspond aux filtres actifs.\n"
+            "« Réinitialiser » affiche à nouveau toute la base."
+            if active
+            else "Aucun constat en base.\n« Importer… » charge un résultat de scanner."
+        )
+        self.table.populate(
+            rows,
+            select_id=self.detail_panel.current_id,
+            empty_message=empty_message,
+        )
 
     def _show_detail(self, finding_id: int) -> None:
         detail = get_finding_detail(self._session, finding_id)
@@ -384,21 +491,26 @@ class MainWindow(QMainWindow):
 
 def main() -> None:
     app = QApplication(sys.argv)
+    # Thème appliqué AVANT la construction de la fenêtre : palette + QSS en
+    # place au premier rendu (aucun « flash » du thème précédent).
+    apply_theme(app, stored_theme())
     window = MainWindow()
     window.show()
     # La fenêtre doit rester dans la zone de travail (au-dessus de la barre des
     # tâches) : on ajuste sa géométrie à la zone disponible de son écran, sans
     # quoi son bas finit masqué sous la barre des tâches sur les écrans peu
     # hauts. Les barres de défilement internes gardent alors le contenu complet
-    # visible en cas de petite zone affichable.
-    screen = window.screen()
-    if screen is not None:
-        avail = screen.availableGeometry()
-        geo = window.frameGeometry()
-        geo.setWidth(min(geo.width(), avail.width()))
-        geo.setHeight(min(geo.height(), avail.height()))
-        geo.moveCenter(avail.center())
-        window.setGeometry(geo)
+    # visible en cas de petite zone affichable. Une géométrie restaurée (le
+    # redimensionnement de l'utilisateur) est conservée telle quelle.
+    if not window.geometry_restored:
+        screen = window.screen()
+        if screen is not None:
+            avail = screen.availableGeometry()
+            geo = window.frameGeometry()
+            geo.setWidth(min(geo.width(), avail.width()))
+            geo.setHeight(min(geo.height(), avail.height()))
+            geo.moveCenter(avail.center())
+            window.setGeometry(geo)
     sys.exit(app.exec())
 
 

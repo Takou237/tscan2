@@ -348,10 +348,19 @@ python -m tscan_gui
 La fenêtre se compose de :
 
 - une **barre d'outils** : `Importer…`, `Scanner…`, `Corréler`, `Rapport…`, `Arrêter`
-  (active pendant un scan), `Actualiser` ;
+  (active pendant un scan), `Actualiser`, `Thème clair` / `Thème sombre` — chaque
+  action dispose d'un raccourci clavier (`Ctrl+O`, `Ctrl+N`, `Ctrl+K`, `Ctrl+R`,
+  `Ctrl+.`, `F5`, `Ctrl+T`), affiché dans son infobulle ;
 - une **barre de filtres** au-dessus de la liste : statut, gravité, cible (liste
-  déroulante) et recherche texte — combinables (ET logique), effet immédiat (UC1) ;
-- la **liste des constats** triée par gravité : cliquer sur une ligne ouvre le détail ;
+  déroulante) et recherche texte — combinables (ET logique), effet immédiat (UC1).
+  Un **compteur** (à droite de la recherche) indique le nombre de lignes affichées ;
+  si aucun constat ne passe les filtres, la table affiche un message explicite
+  plutôt qu'un tableau vide ;
+- la **liste des constats** triée par gravité : cliquer sur une ligne ouvre le détail.
+  La gravité s'affiche avec son **libellé français** (`Critique`, `Élevée`,
+  `Moyenne`, `Faible`, `Information`) et une pastille colorée ; les colonnes
+  ID, Instances et Score trient sur leur valeur numérique (les constats sans
+  score (`--`) passent en dernier) ;
 - le **panneau de détail** (droite) : titre, gravité, statut, score de confiance avec
   explication, preuves, historique des corrections, et formulaire de correction manuelle
   avec raison obligatoire (UC2) ;
@@ -362,7 +371,17 @@ La fenêtre se compose de :
 Toutes les opérations longues (import, corrélation, scan, rapport) s'exécutent en
 arrière-plan : la fenêtre reste réactive (RNF-03).
 
-### 4.3 Les dialogues
+### 4.3 Apparence (thème clair / sombre)
+
+L'interface démarre en **thème sombre** ; le bouton `Thème clair` de la barre
+d'outils (`Ctrl+T`) bascule instantanément vers le thème clair, et le bouton
+devient `Thème sombre`. Le choix est **mémorisé** : il s'applique au prochain
+lancement, sans réglage supplémentaire. Les couleurs d'information (pastilles de
+gravité et de statut) restent identiques dans les deux thèmes. La géométrie de la
+fenêtre et la position du séparateur liste/détail sont également conservées d'une
+session à l'autre.
+
+### 4.4 Les dialogues
 
 **Importer… (UC3)** — Sélection du fichier, de la source (`nuclei`, `zap`, `nessus`,
 `openvas`), de la cible concernée, et case à cocher « Lancer une ré-observation active »
@@ -385,7 +404,7 @@ constat en « potentiel faux positif » pendant la corrélation.
 optionnelle (vide = toutes les cibles). Une boîte confirme la génération ; ouvrez le
 fichier dans un navigateur pour vérifier le rendu.
 
-### 4.4 Correction manuelle d'un statut (UC2)
+### 4.5 Correction manuelle d'un statut (UC2)
 
 Dans le panneau de détail d'un constat : choisir le nouveau statut (**Confirmé**, **Faux
 positif**, **Potentiel faux positif**, **Probable**), saisir une **raison** (obligatoire),

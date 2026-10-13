@@ -102,6 +102,17 @@ def test_statuses_and_severity_order(session: Session) -> None:
     assert SEVERITY_ORDER == ["critical", "high", "medium", "low", "info"]
 
 
+def test_severity_labels_match_the_report_wording() -> None:
+    """L'interface affiche les mêmes mots que les rapports (« Élevée » et non
+    « high ») ; la valeur brute reste en base et dans `FilterState`."""
+    from tscan_gui.viewmodel import severity_label
+
+    assert severity_label("critical") == "Critique"
+    assert severity_label("high") == "Élevée"
+    assert severity_label("info") == "Information"
+    assert severity_label("inconnue") == "inconnue"
+
+
 def test_list_findings_all_sorted_by_severity(session: Session) -> None:
     rows = list_findings(session)
     severities = [r.severity for r in rows]

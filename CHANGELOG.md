@@ -48,6 +48,24 @@ propre sur `src/` et `tests/`, 54 règles YAML, 31 modules de détection.
   élévation, raccourcis, PATH, désinstalleur, interface française.
 - Icône et métadonnées de version Windows.
 
+### Repackaging (13/10/2026)
+
+Les livrables Windows ont été reconstruits pour embarquer les modifications
+récentes (habillage graphique clair/sombre de la GUI du 08/10, pastilles
+corrigées sur fond sombre — retour du 09/10, regroupement des instances par
+vulnérabilité, retrait d'un import inutilisé dans `widgets.py`) :
+
+- Exécutables reconstruits (PyInstaller 6.22.3, `--clean --noconfirm`) :
+  `dist/tscan.exe` (27,0 Mo) et `dist/tscan-gui.exe` (67,4 Mo).
+- Recette re-vérifiée sur le bundle : `version`, `--help`, puis, dans un
+  répertoire `USERPROFILE` isolé (technique des scripts de démonstration,
+  la vraie base `~/.tscan/tscan.db` n'est jamais touchée), `init-db` →
+  import Nuclei réel (3 constats) → corrélation (règles du bundle chargées)
+  → `list` corrects ; `tscan-gui.exe` démarre (offscreen) et se ferme
+  proprement.
+- Installeur recompilé (`ISCC.exe installer/tscan.iss`) :
+  `installer/Output/tscan-0.1.0-setup.exe` (95,5 Mo).
+
 ### Ajouté — Démarche anti-faux-positifs (semaine 12, P1→P7)
 
 - Verdict sur la destination des redirections (RF-20) : un `302 /wp-admin/`

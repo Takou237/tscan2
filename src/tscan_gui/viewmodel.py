@@ -42,10 +42,47 @@ STATUS_LABEL: dict[str, str] = {
     FindingStatus.FALSE_POSITIVE.value: "Faux positif",
 }
 
+# Libellés français des gravités, alignés sur ceux du rapport
+# (`tscan_core.reporting.SEVERITY_LABEL`) : la GUI et les rapports emploient
+# les mêmes mots (« Élevée » et non « high »), les valeurs brutes restant en
+# base et dans les filtres (`FilterState.severity` porte la valeur brute).
+SEVERITY_LABEL: dict[str, str] = {
+    "critical": "Critique",
+    "high": "Élevée",
+    "medium": "Moyenne",
+    "low": "Faible",
+    "info": "Information",
+}
+
 
 def status_label(value: str) -> str:
     """Retourne le libellé français d'un statut pour l'affichage GUI."""
     return STATUS_LABEL.get(value, value)
+
+
+def severity_label(value: str) -> str:
+    """Retourne le libellé français d'une gravité pour l'affichage GUI."""
+    return SEVERITY_LABEL.get(value, value)
+
+
+def severity_rank(value: str) -> int:
+    """Rang de tri d'une gravité (0 = la plus critique).
+
+    Sert aux colonnes triables de la table : sans rang numérique, un tri sur
+    le libellé remonterait « Information » avant « Critique ».
+    """
+    try:
+        return SEVERITY_ORDER.index(value.lower())
+    except ValueError:
+        return len(SEVERITY_ORDER)
+
+
+def status_rank(value: str) -> int:
+    """Rang de tri d'un statut (0 = premier de `VALID_STATUSES`)."""
+    try:
+        return VALID_STATUSES.index(value)
+    except ValueError:
+        return len(VALID_STATUSES)
 
 
 @dataclass

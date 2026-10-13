@@ -73,13 +73,14 @@ sortie. 11 commandes : `version`, `init-db`, `import`, `correlate`, `list`, `sho
 
 ### 2.2 `tscan_gui` — application desktop
 
-Sept modules PySide6 :
+Principaux modules PySide6 :
 
 | Module | Rôle |
 |---|---|
-| `main.py` | `MainWindow` : barre d'outils, filtres, table des constats, panneau de détail, onglets Progression / Historique des requêtes |
-| `viewmodel.py` | Logique de présentation pure (filtres, tri, libellés) — testable sans écran |
-| `widgets.py` | `FilterBar`, `FindingsTable`, `FindingDetailPanel`, `ScanProgressPanel` |
+| `main.py` | `MainWindow` : barre d'outils (icônes + raccourcis + bascule de thème), filtres, table des constats, panneau de détail, onglets Progression / Historique des requêtes ; géométrie mémorisée (`QSettings`) |
+| `viewmodel.py` | Logique de présentation pure (filtres, tri, libellés FR gravité/statut) — testable sans écran |
+| `theme.py` | Thèmes **clair / sombre** : jetons de couleur, feuille de style QSS, palette Fusion, persistance (`QSettings`, isolable via `TSCAN_SETTINGS_DIR`), pastilles de gravité/statut |
+| `widgets.py` | `FilterBar`, `FindingsTable` (tri sur clé typée, pastilles, état vide), `FindingDetailPanel`, `ScanProgressPanel` |
 | `dialogs.py` | `ImportDialog`, `ScanDialog`, `CorrelateDialog`, `ReportDialog` — chaque dialogue expose `config_kwargs()` prêt pour la tâche |
 | `workers.py` | `TaskWorker` (QThread) + fabriques `import_task`, `correlate_task`, `scan_task`, `report_task` — l'interface reste réactive (RNF-03) |
 | `__main__.py` | Point d'entrée `python -m tscan_gui` |
