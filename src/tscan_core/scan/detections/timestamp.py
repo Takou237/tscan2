@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
+from tscan_core.scan.detections.page_scope import served_pages
 
 RULE_ID = "RULE-TIMESTAMP-001"
 CATEGORY = "information_disclosure"
@@ -42,9 +43,7 @@ def run(
     de dates plausibles (2001-2100), hors plages deversioning courantes (2^31
     ~ 2038 ne couvre pas l'absurde)."""
     del config, client, started_at, on_event
-    checked = [root]
-    if pages:
-        checked.extend(pages.values())
+    checked = served_pages(root, pages)
 
     found: list[str] = []
     seen: set[int] = set()

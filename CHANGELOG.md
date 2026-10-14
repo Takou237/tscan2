@@ -10,6 +10,34 @@ Version courante : **0.1.0** — première version complète du MVP.
 
 ---
 
+## [Unreleased]
+
+### Corrigé — Réduction du bruit de détection (14/10/2026)
+
+Audit du bruit du scan actif : sur une cible saine, 15 constats étaient tous des
+faux positifs d'en-têtes « absent ». Deux causes racines corrigées :
+
+- **Sondes de chemins analysées comme des pages** : la table `pages` mêlait les
+  pages réellement servies et les sondes de chemins (BAC `path_status`) qui
+  répondent 403/404. Les modules d'analyse passive (en-têtes, CSP,
+  Permissions-Policy, parité ZAP, SRI, timestamps, `modern-web-app`) itèrent
+  désormais `served_pages` (statut 2xx uniquement, cf.
+  `scan/detections/page_scope.py`) : plus de constat « en-tête absent » sur une
+  page d'erreur issue d'une sonde interne.
+- **Doublons d'en-têtes** : `RULE-MISCONFIG-001` (déclaratif, racine) et les
+  familles dédiées (`RULE-*-NOTSET`, par page, rejouables) signalaient le même
+  en-tête. `superseded_headers` (`scan/checks.py`) retire le check déclaratif
+  quand la famille dédiée est active : un seul constat par en-tête.
+
+**Effet mesuré** : cible saine → 15 faux positifs → **2 constats** (tous deux
+légitimes) ; scénario B sur le labo → 46 → **33 constats** (MISCONFIG-001 : 6 → 1).
+
+**Tests** : `tests/test_noise_reduction.py` (9 tests : filtre `served_pages`,
+dé-duplication, intégration orchestrateur) ; `test_s11_scenarios.py` recalibré
+(46 → 33). Suite complète : **387 tests verts**, `ruff` propre.
+
+---
+
 ## [0.1.0] — 2026-10-02
 
 Version complète du MVP : import multi-formats, corrélation, scan actif,

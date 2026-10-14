@@ -15,6 +15,7 @@ import re
 from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
+from tscan_core.scan.detections.page_scope import served_pages
 
 RULE_ID = "RULE-MODERN-APP-001"
 CATEGORY = "information_disclosure"
@@ -55,9 +56,7 @@ def run(
     marqueurs d'API JavaScript modernes (aucune requête supplémentaire)."""
     del config, client, observations, started_at, on_event
 
-    checked = [root]
-    if pages:
-        checked.extend(pages.values())
+    checked = served_pages(root, pages)
 
     results: list[DetectionResult] = []
     seen: set[str] = set()

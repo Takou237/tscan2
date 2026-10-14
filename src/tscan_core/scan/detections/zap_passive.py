@@ -17,6 +17,7 @@ import re
 from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
+from tscan_core.scan.detections.page_scope import served_pages
 
 CATEGORY_MISCONFIG = "security_misconfiguration"
 CATEGORY_INFO = "information_disclosure"
@@ -47,12 +48,10 @@ def run(
     pages: dict | None = None,
     on_event=None,
 ) -> list[DetectionResult]:
-    """Analyse passive des réponses déjà récoltées (racine + pages)."""
+    """Analyse passive des réponses déjà récoltées (racine + pages servies)."""
     del config, client, observations, started_at, on_event
 
-    checked = [root]
-    if pages:
-        checked.extend(pages.values())
+    checked = served_pages(root, pages)
 
     results: list[DetectionResult] = []
     root_url = root.final_url

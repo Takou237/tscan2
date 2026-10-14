@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
+from tscan_core.scan.detections.page_scope import served_pages
 
 RULE_ID = "RULE-XDOMAIN-JS-001"
 CATEGORY = "security_misconfiguration"
@@ -37,9 +38,7 @@ def run(
     """Analyse passive : signale tout `<script src>` pointant vers un domaine
     externe (cross-domain)."""
     del config, client, started_at, on_event
-    checked = [root]
-    if pages:
-        checked.extend(pages.values())
+    checked = served_pages(root, pages)
 
     found: list[str] = []
     for page in checked:

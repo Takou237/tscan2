@@ -45,6 +45,33 @@ from tscan_core.rule_engine.schema import RuleDefinition
 # protection (voir `is_path_exposed`), pas une exposition.
 EXPOSED_STATUSES = (200, 204, 301, 302)
 
+# En-têtes également couverts par une famille passive dédiée (constat par page
+# servie, avec `probe_info` rejouable). Quand la famille correspondante est
+# active dans le périmètre, le check déclaratif équivalent de RULE-MISCONFIG-001
+# est ignoré : on évite de signaler le même en-tête deux fois (doublon) et on
+# conserve la version la plus précise (par page, re-vérifiable). Un en-tête
+# absent de cette table (ex. Referrer-Policy) reste couvert par le déclaratif.
+_DEDICATED_HEADER_FAMILIES: dict[str, str] = {
+    "content-security-policy": "csp",
+    "strict-transport-security": "header-notset",
+    "x-content-type-options": "header-notset",
+    "x-frame-options": "header-notset",
+    "permissions-policy": "permissions-policy",
+}
+
+
+def superseded_headers(allowed_tests: frozenset[str] | set[str]) -> set[str]:
+    """En-têtes couverts par un module dédié actif (à ignorer en déclaratif).
+
+    Retourne l'ensemble des noms d'en-têtes (minuscules) dont le check
+    déclaratif ferait doublon avec une famille passive dédiée active.
+    """
+    return {
+        header
+        for header, family in _DEDICATED_HEADER_FAMILIES.items()
+        if family in allowed_tests
+    }
+
 # Signatures de pages d'authentification : une redirection vers l'une de
 # ces pages est la signature d'une ressource PROTÉGÉE (ex : WordPress répond
 # 302 /wp-admin/ -> /wp-login.php), pas d'un panneau exposé — classique
@@ -277,6 +304,7 @@ def evaluate_rule_checks(
     pages: dict[str, RootResponse] | None = None,
     calibration: RootResponse | None = None,
     calibration_token: str | None = None,
+    skip_headers: set[str] | None = None,
 ) -> list[CheckResult]:
     """Évalue les checks d'une règle et retourne les constats (un par check).
 
@@ -287,14 +315,22 @@ def evaluate_rule_checks(
     `calibration` est la réponse du chemin-sentinelle (contrôle négatif anti
     soft-404, voir `is_path_exposed`) ; `None` si la sentinelle n'a pas pu
     être réalisée — les checks restent alors évalués sur leur statut seul.
+
+    `skip_headers` liste les en-têtes dont le check `header_absent` doit être
+    ignoré : ils sont déjà couverts par une famille passive dédiée active
+    (déduplication, cf. `superseded_headers`).
     """
     validate_rule_checks(rule)
     results: list[CheckResult] = []
     pages = pages or {}
+    skip = {h.lower() for h in (skip_headers or ())}
 
     for raw in rule.checks:
         check_type = raw.get("type")
         if check_type == "header_absent":
+            header = raw.get("header")
+            if isinstance(header, str) and header.strip().lower() in skip:
+                continue
             result = _evaluate_header_absent(rule, raw, root)
         elif check_type == "clickjacking":
             result = _evaluate_clickjacking(rule, root)

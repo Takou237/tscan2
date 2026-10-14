@@ -121,16 +121,18 @@ def test_s11_scenario_b_scan_validate_report(tmp_path: Path, lab_server) -> None
         assert result.exit_code == 0, result.stdout
         assert "Scan actif #" in result.stdout
         assert "Technologies détectées" in result.stdout
-        # 46 constats depuis la suite P7 : Permissions-Policy par page (4) et
-        # en-têtes absents par page (HSTS/XCTO/XFO × 4 pages = 12) au lieu de
-        # 3 constats agrégés (3 → 12 = +9 sur les 37 précédents).
-        assert "Résultats de sécurité (46)" in result.stdout
+        # 33 constats après le correctif anti-bruit : la déduplication retire
+        # les en-têtes re-signalés par RULE-MISCONFIG-001 quand une famille
+        # dédiée est active (6 → 1) et l'analyse passive d'en-têtes ne porte
+        # plus que sur les pages réellement servies (2xx), plus sur les sondes
+        # de chemins qui répondent 403/404 (/wp-admin/, /config/...).
+        assert "Résultats de sécurité (33)" in result.stdout
 
         # 2. Aucune confirmation automatique : le moteur laisse les constats
         #    Probable (RF-12 — « Confirmée » est un verdict d'analyste).
         with get_session(engine) as session:
             findings = session.query(Finding).all()
-            assert len(findings) == 46
+            assert len(findings) == 33
             for finding in findings:
                 assert finding.status == FindingStatus.PROBABLE
                 assert finding.confidence_score is not None

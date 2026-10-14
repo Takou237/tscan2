@@ -20,6 +20,7 @@ from __future__ import annotations
 from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
+from tscan_core.scan.detections.page_scope import served_pages
 
 # Règles émises selon le constat.
 RULE_NOTSET = "RULE-CSP-NOTSET-001"
@@ -101,11 +102,9 @@ def run(
     pages: dict | None = None,
     on_event=None,
 ) -> list[DetectionResult]:
-    """Analyse passive de la CSP sur la racine et les pages crawlées."""
+    """Analyse passive de la CSP sur la racine et les pages servies."""
     del config, client, started_at, on_event
-    checked = [root]
-    if pages:
-        checked.extend(pages.values())
+    checked = served_pages(root, pages)
 
     notset_found = False
     wildcards: list[str] = []

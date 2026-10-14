@@ -22,6 +22,7 @@ from __future__ import annotations
 from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
+from tscan_core.scan.detections.page_scope import served_pages
 
 RULE_XPOWEREDBY = "RULE-XPOWEREDBY-001"
 
@@ -39,11 +40,9 @@ def run(
     on_event=None,
 ) -> list[DetectionResult]:
     """Analyse passive des en-têtes de sécurité sur la racine et les pages
-    crawlées."""
+    réellement servies (statut 2xx)."""
     del config, client, observations, started_at, on_event
-    checked = [root]
-    if pages:
-        checked.extend(pages.values())
+    checked = served_pages(root, pages)
 
     xpoweredby: list[str] = []
 

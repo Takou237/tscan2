@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
+from tscan_core.scan.detections.page_scope import served_pages
 
 
 @dataclass(frozen=True)
@@ -84,12 +85,15 @@ def run(
     on_event=None,
 ) -> list[DetectionResult]:
     """Analyse passive : un constat par (page, en-tête absent), avec
-    ``probe_info`` rejouable (aucune requête supplémentaire)."""
+    ``probe_info`` rejouable (aucune requête supplémentaire).
+
+    Seules les pages réellement servies sont analysées (statut 2xx) : les
+    sondes de chemins qui répondent 404/403 ne sont pas des pages de
+    l'application (cf. ``page_scope``).
+    """
     del config, client, observations, started_at, on_event
 
-    checked = [root]
-    if pages:
-        checked.extend(pages.values())
+    checked = served_pages(root, pages)
 
     results: list[DetectionResult] = []
     seen: set[tuple[str, str]] = set()

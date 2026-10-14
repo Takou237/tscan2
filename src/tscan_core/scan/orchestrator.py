@@ -59,6 +59,7 @@ from tscan_core.scan.checks import (
     CheckResult,
     evaluate_rule_checks,
     new_calibration_token,
+    superseded_headers,
     validate_rule_checks,
 )
 from tscan_core.scan.config import ScanConfig, ScanConfigError
@@ -597,6 +598,9 @@ def _run_declarative_checks(
 
     findings: list[FindingInfo] = []
     allowed = config.allowed_tests
+    # Déduplication : les en-têtes couverts par une famille passive dédiée
+    # active ne sont pas re-signalés par les checks déclaratifs (RULE-MISCONFIG-001).
+    skip_headers = superseded_headers(allowed)
     for rule in rules:
         if not rule.checks:
             continue
@@ -609,7 +613,9 @@ def _run_declarative_checks(
         if not eligible:
             continue
 
-        results = evaluate_rule_checks(rule, root, pages, calibration, calibration_token)
+        results = evaluate_rule_checks(
+            rule, root, pages, calibration, calibration_token, skip_headers=skip_headers
+        )
         for result in results:
             findings.append(
                 _persist_finding(

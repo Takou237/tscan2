@@ -15,6 +15,7 @@ from __future__ import annotations
 from tscan_core.recon.client import RootResponse
 from tscan_core.scan.config import ScanConfig
 from tscan_core.scan.detections import DetectionResult
+from tscan_core.scan.detections.page_scope import served_pages
 
 RULE_ID = "RULE-PERMISSIONS-NOTSET-001"
 CATEGORY = "security_misconfiguration"
@@ -32,12 +33,15 @@ def run(
     on_event=None,
 ) -> list[DetectionResult]:
     """Analyse passive : un constat par page dont la réponse ne porte pas
-    l'en-tête Permissions-Policy (aucune requête supplémentaire)."""
+    l'en-tête Permissions-Policy (aucune requête supplémentaire).
+
+    Seules les pages réellement servies sont analysées (statut 2xx) : les
+    sondes de chemins qui répondent 404/403 ne sont pas des pages de
+    l'application (cf. ``page_scope``).
+    """
     del config, client, observations, started_at, on_event
 
-    checked = [root]
-    if pages:
-        checked.extend(pages.values())
+    checked = served_pages(root, pages)
 
     results: list[DetectionResult] = []
     seen: set[str] = set()
