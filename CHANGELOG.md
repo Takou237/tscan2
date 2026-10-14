@@ -78,6 +78,11 @@ vulnérabilité, retrait d'un import inutilisé dans `widgets.py`) :
 - **Sentinelle anti soft-404 généralisée** aux injections SQL/XSS, fichiers
   sensibles et listing de répertoire : une réponse indiscernable du bruit de
   fond ne produit plus de constat (`f5b197e`).
+- **Sondes écartées exposées (14/10/2026)** : chaque sonde écartée par un
+  contrôle anti-faux-positifs (sentinelle P2, verdicts différentiels P1) devient
+  un constat au statut **Potentiel faux positif** — règle de la famille, preuve
+  par raison exécutée et historique de statut — au lieu d'un simple compteur :
+  l'analyste voit ce que le moteur a volontairement écarté (RF-12).
 - **Section « Méthodologie anti faux positifs »** dans les rapports : compteurs
   de sondes écartées, preuve que les contrôles ont tourné (`f5b197e`).
 - **Re-vérification précise RF-23** des règles parité ZAP et **en-têtes de
@@ -106,6 +111,14 @@ vulnérabilité, retrait d'un import inutilisé dans `widgets.py`) :
 - Avertissement explicite quand la cible bloque le scanner (anti-bot/WAF), au
   lieu d'un résumé trompeusement normal.
 - `HWND_BROADCAST` redéclaré à tort dans le script Inno Setup (`6df298c`).
+- **Sur-suppression de la sentinelle anti soft-404 (14/10/2026)** : l'indice fondé
+  sur la seule réflexion du jeton classait *toute* page 200 comme générique dès
+  que le serveur ré-écho le chemin demandé (404 habillé, CMS), supprimant à la
+  fois de vrais et de faux positifs. Une réponse n'est désormais écartée que si
+  elle est **indiscernable du contrôle** (jeton-sentinelle et chemin demandé
+  retirés des deux corps, mots principaux communs et longueur comparable) ; un
+  serveur qui ré-écho le chemin dans une page par ailleurs propre à la ressource
+  sondée conserve son constat. Suite portée à **377 tests verts**, `ruff` propre.
 
 ### Documentation
 

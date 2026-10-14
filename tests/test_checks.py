@@ -235,20 +235,41 @@ def test_is_path_exposed_distinct_body_not_blocked_by_calibration() -> None:
     assert is_path_exposed(probe, calibration, "abc123")
 
 
-def test_is_path_exposed_reflection_gap_blocks_finding() -> None:
-    """Soft-404 réfléchissant : la page du contrôle contient le jeton du
-    chemin-sentinelle (« introuvable tscan-calib-abc123 ») mais pas la sonde
-    → le serveur fabrique des pages à la demande → pas de constat."""
+def test_is_path_exposed_reflecting_server_keeps_distinct_finding() -> None:
+    """Serveur qui ré-écho le chemin dans sa page d'erreur : une ressource
+    réelle, dont le corps diffère du contrôle, reste signalée. La réflexion
+    du jeton par le contrôle seul ne suffit pas à écarter un vrai positif
+    (revue anti-faux-positifs du 14/10/2026)."""
     probe = _response(
         status=200,
         url="http://example.test/admin/",
         request_url="http://example.test/admin/",
-        body="<html><body><h1>Accueil</h1><p>Contenu propre au site</p></body></html>",
+        body="<html><body><h1>Panneau d'administration</h1><p>Gestion des utilisateurs</p></body></html>",
+    )
+    calibration = _response(
+        status=404,
+        url="http://example.test/tscan-calib-abc123def456",
+        request_url="http://example.test/tscan-calib-abc123def456",
+        body="<html><body><p>La page /tscan-calib-abc123def456 n'existe pas</p></body></html>",
+    )
+    assert is_path_exposed(probe, calibration, "abc123def456")
+
+
+def test_is_path_exposed_soft404_echo_blocks_finding() -> None:
+    """Soft-404 qui ré-écho le chemin demandé : après retrait du jeton et du
+    chemin, les deux pages générées deviennent quasi identiques → pas de
+    constat (le contrôle négatif continue de fonctionner)."""
+    probe = _response(
+        status=200,
+        url="http://example.test/phpinfo.php",
+        request_url="http://example.test/phpinfo.php",
+        body="<html><body><h1>Erreur 404</h1><p>La ressource /phpinfo.php est introuvable.</p></body></html>",
     )
     calibration = _response(
         status=200,
         url="http://example.test/tscan-calib-abc123def456",
-        body="<html><body><p>La page tscan-calib-abc123def456 n'existe pas</p></body></html>",
+        request_url="http://example.test/tscan-calib-abc123def456",
+        body="<html><body><h1>Erreur 404</h1><p>La ressource /tscan-calib-abc123def456 est introuvable.</p></body></html>",
     )
     assert not is_path_exposed(probe, calibration, "abc123def456")
 

@@ -141,27 +141,47 @@ def new_calibration_token(length: int = 12) -> str:
     return "".join(random.choices(_CALIBRATION_ALPHABET, k=length))
 
 
-def _token_similarity(body: str, token: str | None) -> float:
-    """Partie du jeton-sentinelle présente dans un corps de page (0.0 à 1.0).
-
-    Une page de soft-404 réfléchit souvent une partie de l'URL demandée
-    (« La page tscan-calib-k3v9… n'existe pas ») : comparer la ressemblance
-    au seul marqueur évite de compter cette réflexion comme du contenu
-    propre au chemin sonde.
-    """
-    if not token:
-        return 0.0
-    if token in body:
-        return 1.0
-    fragment = max(4, len(token) // 2)
-    hits = sum(1 for i in range(len(token) - fragment + 1) if token[i : i + fragment] in body)
-    return hits / max(1, len(token) - fragment + 1)
-
-
 def _tokenize(text: str) -> set[str]:
     """Jeu de mots significatifs d'une page (texte HTML réduit, mots ≥ 4)."""
     stripped = re.sub(r"<[^>]+>", " ", text or "")
     return set(re.findall(r"[a-z0-9]{4,}", stripped.lower()))
+
+
+def _reflection_fragments(
+    response: RootResponse, calibration_token: str | None
+) -> tuple[str, ...]:
+    """Marqueurs qui trahissent le chemin demandé dans le corps d'une réponse.
+
+    Un serveur à soft-404 ré-écho la requête (« la ressource /x est
+    introuvable ») : le jeton-sentinelle et l'URL (ou le chemin) demandés
+    apparaissent alors dans le corps. Comparer deux corps sans les retirer
+    ferait passer deux pages générées pour des chemins différents pour deux
+    ressources réelles — l'inverse du but recherché. Les fragments sont
+    listés du plus spécifique au plus court (URL complète, chemin, jeton) :
+    retirer le chemin suffit quand il contient déjà le jeton.
+    """
+    fragments: list[str] = []
+    url = (response.request_url or "").rstrip("/")
+    if url:
+        fragments.append(url)
+        path = urlparse(url).path.rstrip("/")
+        if path and path != url:
+            fragments.append(path)
+    if calibration_token:
+        fragments.append(calibration_token)
+    seen: set[str] = set()
+    unique: list[str] = []
+    for fragment in fragments:
+        if fragment and fragment not in seen:
+            seen.add(fragment)
+            unique.append(fragment)
+    return tuple(unique)
+
+
+def _strip_reflection(body: str, fragments: tuple[str, ...]) -> str:
+    for fragment in fragments:
+        body = body.replace(fragment, "")
+    return body
 
 
 def _is_generic_response(
@@ -169,35 +189,33 @@ def _is_generic_response(
 ) -> bool:
     """Décide que la réponse de la sonde est « générique » (soft-404).
 
-    Trois indices, dans l'ordre :
-    1. le corps du contrôle réfléchit le jeton du chemin-sentinelle et
-       celui de la sonde non (ou moins) : le serveur fabrique des pages
-       « introuvable » à la demande, le 200 de la sonde est du même acabit ;
-    2. les deux corps sont quasi identiques (≥ 0.90) après retrait du
-       jeton : même page générée pour deux chemins différents ;
-    3. mêmes mots principaux (≥ 0.90) entre les deux pages.
-    Un seul indice suffit : en cas de doute, on ne conclut pas — c'est le
-    compromis choisi pour limiter les faux positifs (RF-12).
+    Une réponse n'est écartée que si elle est **indiscernable du contrôle
+    négatif** : après retrait, de part et d'autre, du jeton-sentinelle et du
+    chemin demandé (qu'une page générée ré-écho), les deux corps doivent
+    partager leurs mots principaux (≥ 0.90) pour une longueur comparable
+    (≥ 0.5). Un serveur qui se contente de **réfléchir** le chemin dans une
+    page par ailleurs propre à la ressource sondée n'écarte plus le constat :
+    la réflexion seule ne prouve pas que le 200 est un soft-404, et s'en
+    servir comme indice à part entière supprimait de vrais positifs (revue
+    du 14/10/2026). En cas de doute, on ne conclut pas au soft-404 : le
+    constat reste produit pour revue analytique (RF-12).
     """
-    reflection_gap = _token_similarity(calibration.body, calibration_token) - _token_similarity(
-        probe.body, calibration_token
+    probe_body = _strip_reflection(
+        probe.body, _reflection_fragments(probe, calibration_token)
     )
-    if reflection_gap > 0.3:
-        return True
-
-    def strip_token(body: str) -> str:
-        return body.replace(calibration_token or "", "").replace(
-            (probe.request_url or "").rstrip("/"), ""
-        )
-    probe_body = strip_token(probe.body)
-    calibration_body = strip_token(calibration.body)
-    if probe_body and calibration_body:
-        a, b = _tokenize(probe_body), _tokenize(calibration_body)
-        words_ratio = len(a & b) / max(1, min(len(a), len(b)))
-        length_ratio = min(len(probe_body), len(calibration_body)) / max(1, max(len(probe_body), len(calibration_body)))
-        if words_ratio >= 0.9 and length_ratio >= 0.5:
-            return True
-    return False
+    calibration_body = _strip_reflection(
+        calibration.body, _reflection_fragments(calibration, calibration_token)
+    )
+    if not probe_body or not calibration_body:
+        return False
+    a, b = _tokenize(probe_body), _tokenize(calibration_body)
+    words_ratio = len(a & b) / max(1, min(len(a), len(b)))
+    if words_ratio < 0.9:
+        return False
+    length_ratio = min(len(probe_body), len(calibration_body)) / max(
+        1, max(len(probe_body), len(calibration_body))
+    )
+    return length_ratio >= 0.5
 
 
 class CheckError(Exception):

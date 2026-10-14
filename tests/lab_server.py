@@ -224,6 +224,28 @@ class _Handler(BaseHTTPRequestHandler):
         params = parse_qs(parsed.query)
         q = (params.get("q") or [""])[0]
 
+        # P6 — Mode soft-404 (activé par le test via `lab_server.enable_soft404()`):
+        # le serveur répond 200 avec une page générique pour TOUT chemin, en
+        # reflétant la requête et en arborant des marqueurs tentants (erreur
+        # SQL, « Index of », signature .env) : exactement le type de serveur
+        # qui fabrique des faux positifs avec une détection naïve. Placé en
+        # tête de routage : un vrai soft-404 répond génériquement AVANT toute
+        # route applicative (y compris `/search`). La sentinelle anti soft-404
+        # (P2) et le verdict différentiel (P1) doivent y faire ABSTENIR les
+        # sondes au lieu de produire des constats.
+        if getattr(self.server, "soft404_mode", False):
+            generic = (
+                "<html><body><h1>Bienvenue sur notre site</h1>"
+                f"<p>Page introuvable : {self.path}</p>"
+                "<p>Erreurs recentes : SQL syntax error sur DATABASE_URL</p>"
+                "<h2>Index of /files/</h2>"
+                "<ul><li>Nos produits</li><li>Nos services</li>"
+                "<li>Contactez-nous</li></ul>"
+                "<p>© 2026 Exemple SARL</p></body></html>"
+            )
+            self._send_text(200, generic)
+            return
+
         if path == SLOW_ROUTE:
             time.sleep(SLOW_DELAY_SECONDS)
 
@@ -269,26 +291,6 @@ class _Handler(BaseHTTPRequestHandler):
                 "<html><body><p>Aucun resultat pour cette recherche.</p></body></html>",
             )
             return
-        # P6 — Mode soft-404 (activé par le test via `lab_server.enable_soft404()`):
-        # le serveur répond 200 avec une page générique pour TOUT chemin, en
-        # reflétant la requête et en arborant des marqueurs tentants (erreur
-        # SQL, « Index of », signature .env) : exactement le type de serveur
-        # qui fabrique des faux positifs avec une détection naïve. La
-        # sentinelle anti soft-404 (P2) et le verdict différentiel (P1)
-        # doivent y faire ABSTENIR les sondes au lieu de produire des constats.
-        if getattr(self.server, "soft404_mode", False):
-            generic = (
-                "<html><body><h1>Bienvenue sur notre site</h1>"
-                f"<p>Page introuvable : {self.path}</p>"
-                "<p>Erreurs recentes : SQL syntax error sur DATABASE_URL</p>"
-                "<h2>Index of /files/</h2>"
-                "<ul><li>Nos produits</li><li>Nos services</li>"
-                "<li>Contactez-nous</li></ul>"
-                "<p>© 2026 Exemple SARL</p></body></html>"
-            )
-            self._send_text(200, generic)
-            return
-
         if path == CORS_ECHO_ROUTE:
             origin = self.headers.get("Origin", "")
             self.send_response_only(200)

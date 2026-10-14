@@ -411,11 +411,17 @@ a servi de fil conducteur à un lot de fiabilisation du check `path_status` (RF-
 2. *Sentinelle anti « soft-404 » (contrôle négatif).* Certains serveurs répondent 200
    avec une page générique pour n'importe quel chemin. Avant les sondes de chemins, une
    requête vers un chemin inexistant aléatoire (`/tscan-calib-<jeton>`) établit le
-   « bruit de fond » du serveur ; une réponse de sonde indiscernable du contrôle
-   (réflexion du jeton, corps quasi identique) ne produit pas de constat — un 200 ne
-   prouve plus rien. Le contrôle est partagé entre détection (orchestrateur) et
-   re-vérification (RF-23), où il ajoute une note « fait décisif non démontrable »
-   plutôt qu'une dégradation silencieuse.
+   « bruit de fond » du serveur ; une réponse de sonde **indiscernable du contrôle** —
+   après retrait, de part et d'autre, du jeton-sentinelle et du chemin demandé, les deux
+   corps partagent leurs mots principaux pour une longueur comparable — ne produit pas de
+   constat, un 200 ne prouve plus rien. La **réflexion du chemin seule** ne suffit jamais
+   à écarter une sonde : un serveur qui ré-écho le chemin dans une page par ailleurs
+   propre à la ressource sondée conserve son constat. Ce point a fait l'objet d'un
+   correctif (revue anti-faux-positifs du 14/10/2026) : un premier indice fondé sur la
+   seule réflexion du jeton classait *toute* page 200 comme générique dès que le serveur
+   ré-écho le chemin (404 habillé, CMS), supprimant de vrais positifs comme de faux. Le
+   contrôle est partagé entre détection (orchestrateur) et re-vérification (RF-23), où il
+   ajoute une note « fait décisif non démontrable » plutôt qu'une dégradation silencieuse.
 3. *Signatures de faux positifs en connaissances.* Les marqueurs de pages
    d'authentification (WordPress, Drupal, Django, pages francophones `connexion`…) ont
    quitté le code pour `knowledge/fp_signatures.yaml`, au même principe que les règles
