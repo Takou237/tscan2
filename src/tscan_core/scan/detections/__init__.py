@@ -23,11 +23,13 @@ from sqlalchemy.orm import Session
 from tscan_core.models import Evidence, EvidenceType, Finding, FindingStatus, Scan
 from tscan_core.scan.config import ScanConfig, ScanConfigError
 from tscan_core.scan.progress import notify
+from tscan_core.status import AUTOMATIC_ACTOR, change_status
 
 __all__ = [
     "DetectionResult",
     "FindingInfo",
     "check_deadline",
+    "persist_abstained_probes",
     "persist_result",
     "run_active_detections",
 ]
@@ -150,6 +152,156 @@ def persist_result(
         category=finding.category,
         matched_at=finding.matched_at,
     )
+
+
+# --- Machine anti-faux-positifs : les écarts deviennent des constats PFP ---
+#
+# Sémantique retenue (demande utilisateur) : toute sonde écartée par un
+# contrôle anti-faux-positifs (sentinelle anti soft-404 P2, verdict
+# différentiel SQLi P1, baseline XSS P1) n'est plus un simple compteur.
+# Elle devient un `Finding` au statut « Potentiel faux positif », affiché
+# dans la liste des résultats et les rapports : l'analyste voit tout ce que
+# le moteur a volontairement écarté (RF-12 — le moteur ne conclut ni à la
+# vulnérabilité, ni à l'absence de vulnérabilité ; la revue analytique tranche).
+
+# Plancher de score d'un constat PFP posé automatiquement (même convention que
+# `confirmation.py` : REVERIFY_CAP/PFP_FLOOR — import évité ici pour ne pas
+# créer de cycle detections ↔ confirmation).
+_ABSTENTION_PFP_SCORE = 0.30
+
+# Famille de sonde écartée → règle YAML qui la déclenche (dérive catégorie,
+# gravité et libellé du constat PFP depuis la règle). À étendre à chaque
+# nouvelle famille qui écarte des sondes (`count_abstained`).
+_FAMILY_RULE_IDS: dict[str, str] = {
+    "sqli": "RULE-SQLI-001",
+    "xss": "RULE-XSS-001",
+    "sensitive_files": "RULE-SENSITIVE-FILES-001",
+    "directory_listing": "RULE-LISTING-001",
+}
+
+
+def persist_abstained_probes(
+    session: Session,
+    scan: Scan,
+    observations: dict,
+    on_event=None,
+) -> list[FindingInfo]:
+    """Transforme les sondes écartées (`anti_fp.sondes_ecartees`) en constats PFP.
+
+    Appelé UNE fois par scan, par l'orchestrateur, après la re-vérification
+    (RF-23) : les écarts de la phase de détection ET ceux des re-runs de la
+    re-vérification, consignés dans le même `observations`, sont alors
+    regroupés par (famille, URL) — une même sonde écartée plusieurs fois
+    (détection puis re-vérification) devient UN constat, chaque raison
+    exécutée restant dans la preuve (ES-08).
+
+    S'il n'y a eu aucun écart (cible saine, sentinelle à 404 sur un serveur
+    qui répond normalement), la fonction ne crée rien : le compteur du bilan
+    « méthodologie anti-faux positifs » du rapport reste la source de vérité
+    de l'exécution des contrôles.
+
+    Retourne la liste des `FindingInfo` créés (pour le message de fin de scan).
+    """
+    entries = (observations.get("anti_fp") or {}).get("sondes_ecartees") or []
+    if not entries:
+        return []
+
+    # Regroupement (famille, URL) avec fusion des raisons exécutées.
+    grouped: dict[tuple[str, str], list[str]] = {}
+    for entry in entries:
+        family = str(entry.get("famille", ""))
+        url = str(entry.get("url", ""))
+        reason = str(entry.get("raison", ""))
+        if reason not in grouped.setdefault((family, url), []):
+            grouped[(family, url)].append(reason)
+
+    global _RULES_BY_ID
+    if _RULES_BY_ID is None:
+        from tscan_core.rule_engine.loader import load_rules
+
+        _RULES_BY_ID = {r.id: r for r in load_rules()}
+
+    infos: list[FindingInfo] = []
+    for (family, url), reasons in grouped.items():
+        rule_id = _FAMILY_RULE_IDS.get(family)
+        rule = _RULES_BY_ID.get(rule_id) if rule_id is not None else None
+        category = rule.category if rule is not None else "other"
+        severity = rule.severity if rule is not None else "low"
+        label = rule.name if rule is not None else family
+
+        finding = Finding(
+            scan_id=scan.id,
+            rule_id=rule_id,
+            check_id=f"anti-fp:{family}",
+            title=(
+                f"Faux positif suspecté ({label}) : sonde écartée par l'anti-"
+                f"faux-positifs — {url or scan.target}"
+            )[:255],
+            description="; ".join(reasons),
+            category=category,
+            severity=severity,
+            matched_at=url or scan.target,
+            status=FindingStatus.UNVALIDATED,
+        )
+        finding.confidence_score = _ABSTENTION_PFP_SCORE
+        finding.score_explanation = json.dumps(
+            [
+                (
+                    "La sonde n'a PAS été retenue comme constat de vulnérabilité : "
+                    "un contrôle anti-faux-positifs (sentinelle anti soft-404 P2 "
+                    "ou verdict différentiel P1) a jugé sa réponse indiscernable "
+                    "du bruit de fond de la cible (RF-12, s'abstenir plutôt que "
+                    "conclure)."
+                ),
+                f"Sondes écartées regroupées pour cette sonde : {len(reasons)}.",
+                (
+                    "Affiché pour revue analytique : corriger en « Faux positif » si "
+                    "la cible est saine, ou corriger le contrôle du labo / retirer "
+                    "cette ligne si le contrôle s'est trompé (décision d'analyste, RF-12)."
+                ),
+            ],
+            ensure_ascii=False,
+        )
+        session.add(finding)
+        session.flush()  # identifiant requis par les preuves et l'historique
+        for reason in reasons:
+            session.add(
+                Evidence(
+                    finding_id=finding.id,
+                    evidence_type=EvidenceType.NOTE,
+                    content_text=f"Contrôle anti-faux-positifs ({family}) : {reason}",
+                )
+            )
+        # Historique complet (ES-06) : le statut passe par change_status pour
+        # que l'entrée de trace soit posée par le même module que partout
+        # ailleurs (tscan_engine est explicitement l'auteur automatique).
+        change_status(
+            session,
+            finding,
+            FindingStatus.POTENTIAL_FALSE_POSITIVE,
+            changed_by=AUTOMATIC_ACTOR,
+            reason=(
+                "Sonde écartée par la machine anti-faux-positifs (sentinelle anti "
+                "soft-404 P2 / verdict différentiel P1) : affiché pour revue "
+                "analytique plutôt que discrètement abandonné."
+            ),
+        )
+        notify(
+            on_event,
+            "detect",
+            f"Sonde écartée affichée en potentiel faux positif : {url or scan.target}",
+            None,
+        )
+        infos.append(
+            FindingInfo(
+                title=finding.title,
+                severity=severity,
+                category=category,
+                matched_at=finding.matched_at,
+            )
+        )
+
+    return infos
 
 
 def run_active_detections(

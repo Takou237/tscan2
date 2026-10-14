@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import pytest
 
+from tscan_core.db import get_engine, get_session, init_db
+from tscan_core.models import Finding, FindingStatus
 from tscan_core.recon.client import create_http_client, fetch_root
 from tscan_core.scan.detections import directory_listing, sensitive_files, sqli, xss
 from tscan_core.scan.detections.sentinel import get_calibration, reset_calibration
@@ -239,6 +241,65 @@ def test_anti_fp_counters_shape(lab_server) -> None:
         )
     finally:
         client.close()
+
+
+# --- Tout écart devient un constat PFP affiché (sémantique choisie) -------
+
+
+def test_abstained_probe_becomes_potential_false_positive_finding(lab_server) -> None:
+    """Sémantique « tout écart devient un constat » (demande utilisateur) :
+    un scan complet sur le labo en mode soft-404 ne produit plus SEULEMENT des
+    compteurs — chaque sonde écartée par un contrôle anti-faux-positifs est
+    affichée en base au statut « Potentiel faux positif », avec la règle de
+    sa famille, une preuve par raison exécutée et l'historique de statut
+    (ES-06). Le moteur n'y pose jamais « Confirmée » ni « Probable » : le
+    constat reste à corriger par l'analyste (RF-12).
+    """
+    from tscan_core.scan.orchestrator import run_recon_scan
+
+    lab_server.enable_soft404()
+    try:
+        engine = get_engine(":memory:")
+        init_db(engine)
+        client = create_http_client()
+        try:
+            config = _config(lab_server.base_url)
+            with get_session(engine) as session:
+                outcome = run_recon_scan(session, config, http_client=client)
+
+                pfps = (
+                    session.query(Finding)
+                    .filter(Finding.scan_id == outcome.scan_id)
+                    .filter(Finding.status == FindingStatus.POTENTIAL_FALSE_POSITIVE)
+                    .all()
+                )
+                abstained = [f for f in pfps if (f.check_id or "").startswith("anti-fp:")]
+
+                assert abstained, (
+                    "au moins une sonde écartée devrait être affichée en potentiel "
+                    "faux positif dans la base"
+                )
+
+                familles = {f.check_id.split(":", 1)[1] for f in abstained}
+                assert {"sqli", "sensitive_files", "directory_listing"} <= familles
+                for finding in abstained:
+                    assert finding.rule_id, "le constat PFP porte la règle de sa famille"
+                    assert finding.confidence_score is not None
+                    assert finding.matched_at
+                    # Historique (ES-06) et preuves (ES-08) : une entrée de trace
+                    # posée par le moteur, une note par raison de contrôle exécuté.
+                    assert finding.status_history
+                    reasons = [
+                        ev.content_text
+                        for ev in finding.evidences
+                        if ev.content_text
+                        and ev.content_text.startswith("Contrôle anti-faux-positifs")
+                    ]
+                    assert reasons, "le constat PFP porte la trace des raisons"
+        finally:
+            client.close()
+    finally:
+        lab_server.disable_soft404()
 
 
 # --- P2 : sans calibration (échec réseau), les sondes ne sont pas écartées -

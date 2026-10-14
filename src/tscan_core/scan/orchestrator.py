@@ -63,7 +63,12 @@ from tscan_core.scan.checks import (
 )
 from tscan_core.scan.config import ScanConfig, ScanConfigError
 from tscan_core.scan.confirmation import reverify_active_findings
-from tscan_core.scan.detections import FindingInfo, check_deadline, run_active_detections
+from tscan_core.scan.detections import (
+    FindingInfo,
+    check_deadline,
+    persist_abstained_probes,
+    run_active_detections,
+)
 from tscan_core.scan.interrupt import ScanCancelledError, ScanInterrupt
 from tscan_core.scan.progress import notify
 from tscan_core.scan.request_log import RequestHistory
@@ -422,6 +427,15 @@ def run_recon_scan(
             interrupted = True
             observations["confirmations_error"] = f"Scan interrompu : durée maximale atteinte ({exc})."
 
+    # Machine anti-faux-positifs (sémantique choisie) : les sondes écartées
+    # par les contrôles (sentinelle anti soft-404 P2, verdict différentiel P1,
+    # baseline XSS P1) ne restent pas de simples compteurs — elles deviennent
+    # des constats visibles au statut « Potentiel faux positif » (RF-12 : la
+    # revue analytique tranche). Appel unique, placé APRÈS la re-vérification
+    # : les écarts des re-runs RF-23 sont ainsi regroupés avec ceux de la
+    # détection (une même sonde écartée deux fois = un constat au lieu de deux).
+    abstained = persist_abstained_probes(session, scan, observations, on_event)
+
     scan.recon_json = json.dumps(observations, ensure_ascii=False)
     scan.finished_at = datetime.now(UTC)
     session.commit()
@@ -432,12 +446,18 @@ def run_recon_scan(
     duration = (datetime.now(UTC) - started_at).total_seconds()
     reproduced = reverify_stats["reproduced"]
     pfps = reverify_stats["potential_false_positives"]
+    absorbed_text = (
+        f", {len(abstained)} sonde(s) écartée(s) affichée(s) en potentiel "
+        "faux positif"
+        if abstained
+        else ""
+    )
     if interrupted:
         notify(
             on_event,
             "done",
             f"Scan interrompu par l'utilisateur après {duration:.1f}s — "
-            f"{len(findings)} constat(s) enregistré(s) (statut Probable).",
+            f"{len(findings)} constat(s) enregistré(s) (statut Probable){absorbed_text}.",
             100,
         )
         return ScanOutcome(
@@ -457,7 +477,7 @@ def run_recon_scan(
         "done",
         f"Scan terminé en {duration:.1f}s — {len(findings)} constat(s) au statut "
         f"Probable, {reproduced} re-vérifié(s) reproductible(s), {pfps} potentiel(s) "
-        "faux positif(s) — la confirmation finale relève de l'analyste.",
+        f"faux positif(s){absorbed_text} — la confirmation finale relève de l'analyste.",
         100,
     )
     return ScanOutcome(

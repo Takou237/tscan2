@@ -121,6 +121,14 @@ def count_abstained(observations: dict, family: str, url: str, reason: str) -> N
     Les compteurs alimentent le bilan « méthodologie anti-faux positifs »
     du rapport : ils prouvent que le contrôle négatif a été exécuté et qu'il
     a écarté des réponses non concluantes au lieu de produire des constats.
+
+    Depuis la sémantique « tout écart devient un constat » (demande
+    utilisateur), chaque sonde écartée est en outre affichée à l'analyste :
+    l'orchestrateur appelle `persist_abstained_probes` (module
+    `tscan_core.scan.detections`) en fin de scan, qui transforme chaque écart
+    regroupé (famille, URL) en `Finding` au statut « Potentiel faux positif ».
+    Les compteurs ci-dessous restent inchangés et la source de vérité du
+    rapport.
     """
     stats = observations.setdefault("anti_fp", {})
     probes = stats.setdefault("sondes_ecartees", [])
